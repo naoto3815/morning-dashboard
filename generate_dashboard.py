@@ -92,66 +92,50 @@ USER_PROMPT = f"""今日（{DATE_JP} {WEEKDAY_JP}曜日）の金融ダッシュ�
 
 出力は **```html で始まり ``` で終わるコードブロックのみ** にしてください。"""
 
-
 def generate_dashboard():
-    """Claude API で HTML を生成"""
     print(f"📊 ダッシュボード生成開始: {DATE_JP}")
-
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        print("❌ ANTHROPIC_API_KEY が .env に設定されていません")
+        print("❌ ANTHROPIC_API_KEY が設定されていません")
         sys.exit(1)
 
     client = anthropic.Anthropic(api_key=api_key)
-
     print("🔍 Claude が web_search で市況データを収集中...")
-    response = client.messages.create(
+
+    # ストリーミングモードで実行（10分超のリクエストに対応）
+    full_text = ""
+    with client.messages.stream(
         model="claude-sonnet-4-6",
         max_tokens=32000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": USER_PROMPT}],
         tools=[{
-            "type": "web_search_20260305",
+            "type": "web_search_20250305",
             "name": "web_search",
-            "max_uses": 12,  # 株・為替・ニュース等の検索回数上限
+            "max_uses": 12,
         }],
-    )
-
-    # ── HTML を抽出 ──
-    full_text = ""
-    for block in response.content:
-        if hasattr(block, "type") and block.type == "text":
-            full_text += block.text
+    ) as stream:
+        for text in stream.text_stream:
+            full_text += text
+            print(text, end="", flush=True)
+    print()  # 改行
 
     # ```html ... ``` を抽出
     if "```html" in full_text:
-        html = full_text.split("```html", 1)[1]
-        html = html.rsplit("```", 1)[0].strip()
+        html = full_text.split("```html", 1)[1].rsplit("```", 1)[0].strip()
     elif "```" in full_text:
-        html = full_text.split("```", 1)[1]
-        html = html.rsplit("```", 1)[0].strip()
+        html = full_text.split("```", 1)[1].rsplit("```", 1)[0].strip()
     else:
         html = full_text.strip()
 
     if not html.startswith("<!DOCTYPE") and not html.startswith("<html"):
-        print("⚠️  警告: HTML として認識できない出力です")
+        print("⚠️  警告: HTMLとして認識できません")
         print(full_text[:500])
         sys.exit(1)
 
-    # ── 保存 ──
     OUTPUT_FILE.write_text(html, encoding="utf-8")
     print(f"✅ 生成完了: {OUTPUT_FILE}")
     print(f"   サイズ: {len(html):,} 文字")
-
-    # 使用量レポート
-    if hasattr(response, "usage"):
-        u = response.usage
-        in_tok = getattr(u, "input_tokens", 0)
-        out_tok = getattr(u, "output_tokens", 0)
-        ws_count = getattr(u, "server_tool_use", {}).get("web_search_requests", "?") if isinstance(getattr(u, "server_tool_use", None), dict) else "?"
-        print(f"   トークン: 入力 {in_tok:,} / 出力 {out_tok:,}")
-        print(f"   Web検索回数: {ws_count}")
-
     return OUTPUT_FILE
 
 
