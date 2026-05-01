@@ -106,15 +106,12 @@ def generate_dashboard():
 
     print("🔍 Claude が web_search で市況データを収集中...")
     response = client.messages.create(
-        tools=[{
-            "type": "web_search_20260209",
-            "name": "web_search",
-            "max_uses": 12,
-        }],max_tokens=32000,
+        model="claude-sonnet-4-6",
+        max_tokens=32000  
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": USER_PROMPT}],
         tools=[{
-            "type": "web_search_20260209",
+            "type": "web_search_20260305",
             "name": "web_search",
             "max_uses": 12,  # 株・為替・ニュース等の検索回数上限
         }],
