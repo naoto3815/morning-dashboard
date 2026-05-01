@@ -106,8 +106,11 @@ def generate_dashboard():
 
     print("🔍 Claude が web_search で市況データを収集中...")
     response = client.messages.create(
-        model="claude-opus-4-7",
-        max_tokens=32000,
+        tools=[{
+            "type": "web_search_20260209",
+            "name": "web_search",
+            "max_uses": 12,
+        }],max_tokens=32000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": USER_PROMPT}],
         tools=[{
