@@ -1,32 +1,16 @@
 """
-Morning Financial Dashboard Auto-Generator
-==========================================
-Claude API を使って毎朝金融ダッシュボードを自動生成するスクリプト。
-
-使い方:
-  1. .env ファイルに ANTHROPIC_API_KEY を設定
-  2. python generate_dashboard.py を実行
-  3. output/ フォルダにHTMLが出力される
-
-cron 例 (毎朝7時に実行):
-  0 7 * * * cd /path/to/this/dir && /usr/bin/python3 generate_dashboard.py
+Morning Financial Dashboard Auto-Generator (2段階生成版)
+Phase 1: web_search で市況データを収集
+Phase 2: 収集データを元にHTML生成
 """
-
 import os
 import sys
-import json
-import base64
-import smtplib
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 
 import anthropic
 from dotenv import load_dotenv
 
-# ── Setup ──
 load_dotenv()
 JST = timezone(timedelta(hours=9))
 TODAY = datetime.now(JST)
@@ -38,186 +22,203 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 OUTPUT_FILE = OUTPUT_DIR / f"financial-dashboard-{DATE_STR}.html"
 
-# ── Skill prompt (compact version of SKILL.md) ──
-SYSTEM_PROMPT = """あなたはプロの金融アナリストアシスタントです。ただし、登録された金融商品取引業者ではないため、特定銘柄の「買い推奨」は断定せず、公開アナリスト見解の整理として情報を提供してください。
+DATA_COLLECTION_PROMPT = f"""今日（{DATE_JP} {WEEKDAY_JP}曜日）の金融市況データをweb_searchで収集し、以下のJSON形式のみで出力してください（説明文不要）:
 
-## タスク
-今日の日付に合わせた金融特化ダッシュボードのHTMLを生成してください。
+{{
+  "date": "{DATE_JP}",
+  "weekday": "{WEEKDAY_JP}曜日",
+  "nikkei": {{"value": "59,513", "change": "+228.00", "pct": "+0.38%", "direction": "up"}},
+  "dow": {{"value": "49,652", "change": "+790.33", "pct": "+1.62%", "direction": "up"}},
+  "sp500": {{"value": "7,204", "change": "+73.06", "pct": "+1.02%", "direction": "up"}},
+  "usdjpy": {{"value": "157.32", "change": "+0.38", "pct": "+0.24%", "direction": "up", "note": "介入警戒"}},
+  "btc_usd": "76,052",
+  "btc_jpy": "11,964,000",
+  "btc_change_pct": "-1.71%",
+  "btc_direction": "down",
+  "fx_rate": "157.32",
+  "news": [
+    {{"tag": "為替", "title": "見出し", "body": "詳細"}},
+    {{"tag": "マーケット", "title": "見出し", "body": "詳細"}},
+    {{"tag": "米国経済", "title": "見出し", "body": "詳細"}},
+    {{"tag": "国際情勢", "title": "見出し", "body": "詳細"}},
+    {{"tag": "暗号資産", "title": "見出し", "body": "詳細"}}
+  ],
+  "events": [
+    {{"date": "5月7日(木)", "importance": "高", "name": "FOMC結果発表", "desc": "早朝3:00。利下げ示唆の有無に注目。"}},
+    {{"date": "5月8日(金)", "importance": "高", "name": "米雇用統計(4月)", "desc": "21:30発表。"}}
+  ],
+  "market_note": "マーケット短評1〜2文"
+}}
 
-## 必須セクション
-1. ヘッダー（日付、曜日、JST時刻）
-2. ⚠️ 免責事項バナー（黄色）
-3. 5つのティッカーカード: 日経平均、NYダウ、S&P 500、USD/JPY、ビットコイン（円建表示）
-4. メインチャート（クリック切替、1M/3M/6M、Chart.js使用）
-5. 1ヶ月評価レビュー（推奨銘柄の前回→現在評価とリターン）
-6. 経済・国際ニュース（為替、金融政策、米国経済、暗号資産など）
-7. 注目銘柄ウォッチリスト（🇯🇵日本株 / 🇺🇸米国株 タブ切替）
-8. 注目ETF・投資信託
-9. 注目セクター（日米統合）
-10. 来週の重要経済イベント
+上記JSONの値を実際の今日のデータに置き換えて出力してください。"""
 
-## デザイン仕様
-- ダークテーマ（Bloomberg Terminal風）
-- フォント: Noto Sans JP + DM Mono + Shippori Mincho
-- カラー: --bg #090e17, --card #131e2b, --accent #3b8eea, --green #34d399, --red #f87171, --orange #fb923c (BTC), --cyan #22d3ee (米国株)
-- 2カラムレイアウト: 左 3fr (チャート+レビュー+ニュース) / 右 2fr (ウォッチリスト+ETF+セクター+イベント)
+HTML_SYSTEM_PROMPT = """あなたはフロントエンドエンジニアです。金融データを受け取り、完全なHTMLダッシュボードを生成します。
 
-## チャート実装
-- Chart.js 4.4.1 を CDN から読み込み
-- genWalk(start, end, vol, seed, n=180) 関数で180日分のデータを生成
-- 最終値は実際の現在値で固定
-- すべてのティッカー・ウォッチリスト・レビュー銘柄をクリックで切替可能に
-- 統計バー（始値・高値・安値・現在値・騰落率）
+## デザイン
+- ダークテーマ、Bloomberg Terminal風
+- Google Fonts: Noto Sans JP + DM Mono + Shippori Mincho
+- Chart.js 4.4.1: https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+- CSS変数: --bg:#090e17, --surface:#0f1923, --card:#131e2b, --border:#1e2d3d, --accent:#3b8eea, --green:#34d399, --red:#f87171, --orange:#fb923c, --cyan:#22d3ee, --yellow:#fbbf24, --purple:#a78bfa, --text:#cdd9e5, --text-dim:#7a96b0, --text-bright:#e8f0f8
 
-## 銘柄選定（現在のマーケット状況に基づく）
-日本株: 三菱UFJ(8306)、東京エレクトロン(8035)、伊藤忠商事(8001)、第一生命HD(8750)、安川電機(6506)、太陽誘電(6976)、日本製鉄(5401)、日本郵船(9101)、花王(4452)、三菱HCキャピタル(8593)
-米国株: NVIDIA(NVDA)、Microsoft(MSFT)、Alphabet(GOOGL)、Broadcom(AVGO)、Apple(AAPL)、Meta(META)、Tesla(TSLA)、TSMC(TSM)、Micron(MU)
-ETF: TOPIX ETF(1306)、SPDRゴールド(1326)、Invesco QQQ、Vanguard S&P 500(VOO)、eMAXIS Slim 全世界株
-## チャートのクリック切替（必須実装）
-以下を必ず実装すること：
+## レイアウト
+1. ヘッダー（日付・曜日・リアルタイム時計 setInterval毎秒更新）
+2. 免責事項バナー（黄色背景）
+3. ティッカーカード5枚横並び（日経・NYダウ・S&P500・USD/JPY・BTC円建）
+4. 2カラム（左3fr: チャート+レビュー+ニュース / 右2fr: ウォッチリスト+ETF+セクター+イベント）
 
-1. DATA オブジェクトに全銘柄のデータを定義：
-   - インデックス: nikkei, dow, sp500, forex, btc
-   - 日本株: d8306, d8035, d8001, d8750, d6506, d6976, d5401, d9101, d4452, d8593
-   - 米国株: dNVDA, dMSFT, dGOOGL, dAVGO, dAAPL, dMETA, dTSLA, dTSM, dMU
-   - ETF: d1306, d1326, dQQQ, dVOO, dOLCAN
+## チャート（必須・省略禁止）
+```javascript
+// 必ずこの構造で実装すること
+function sr(seed){let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
+function genWalk(start,end,vol,seed,n=180){
+  const r=sr(seed);const inc=Array.from({length:n-1},()=>(r()-0.5)*2*vol);
+  let cum=0;const raw=[start];
+  for(let i=0;i<n-1;i++){cum+=inc[i];raw.push(start+cum);}
+  const drift=(end-(start+cum))/(n-1);
+  const corrected=raw.map((v,i)=>+(v+drift*i).toFixed(2));
+  corrected[n-1]=end;return corrected;
+}
 
-2. 各銘柄要素に data-key 属性を付与：
-   <div class="review-item" data-key="dNVDA" onclick="switchToStock('dNVDA', this)">
+// DATAオブジェクト（全銘柄必須）
+const DATA = {
+  nikkei:{label:'日経平均',code:'N225',data:genWalk(38000,59513,800,1),color:'#34d399',pre:'',fmt:v=>Math.round(v).toLocaleString()},
+  dow:   {label:'NYダウ',code:'DJIA',data:genWalk(43000,49652,550,2),color:'#3b8eea',pre:'',fmt:v=>Math.round(v).toLocaleString()},
+  sp500: {label:'S&P 500',code:'SPX',data:genWalk(5800,7204,90,3),color:'#a78bfa',pre:'',fmt:v=>Math.round(v).toLocaleString()},
+  forex: {label:'USD/JPY',code:'FX',data:genWalk(152,157.32,0.6,4),color:'#f87171',pre:'¥',fmt:v=>Number(v).toFixed(2)},
+  btc:   {label:'BTC(円)',code:'BTC',data:genWalk(9000000,11964000,280000,5),color:'#fb923c',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  // 日本株
+  d8306: {label:'三菱UFJ FG',code:'8306',data:genWalk(1580,1815,28,20),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d8035: {label:'東京エレクトロン',code:'8035',data:genWalk(28000,42500,650,21),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d8001: {label:'伊藤忠商事',code:'8001',data:genWalk(7200,8450,135,22),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d8750: {label:'第一生命HD',code:'8750',data:genWalk(3200,3850,55,23),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d6506: {label:'安川電機',code:'6506',data:genWalk(4100,5180,95,24),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d6976: {label:'太陽誘電',code:'6976',data:genWalk(3450,4150,72,25),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d5401: {label:'日本製鉄',code:'5401',data:genWalk(2950,3340,52,26),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d9101: {label:'日本郵船',code:'9101',data:genWalk(4500,4920,90,27),color:'#fbbf24',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d4452: {label:'花王',code:'4452',data:genWalk(6800,6420,90,28),color:'#f87171',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d8593: {label:'三菱HCキャピタル',code:'8593',data:genWalk(1080,1185,18,29),color:'#34d399',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  // 米国株
+  dNVDA: {label:'NVIDIA',code:'NVDA',data:genWalk(110,182,3.2,30),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dMSFT: {label:'Microsoft',code:'MSFT',data:genWalk(420,484,7,31),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dGOOGL:{label:'Alphabet',code:'GOOGL',data:genWalk(178,225,3.8,32),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dAVGO: {label:'Broadcom',code:'AVGO',data:genWalk(220,288,5.5,33),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dAAPL: {label:'Apple',code:'AAPL',data:genWalk(218,235,3.6,34),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dMETA: {label:'Meta',code:'META',data:genWalk(620,712,12,35),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dTSLA: {label:'Tesla',code:'TSLA',data:genWalk(298,265,9,36),color:'#f87171',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dTSM:  {label:'TSMC',code:'TSM',data:genWalk(178,228,4.2,37),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dMU:   {label:'Micron',code:'MU',data:genWalk(380,455,9.5,38),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  // ETF
+  d1306: {label:'TOPIX ETF',code:'1306',data:genWalk(2900,3680,42,40),color:'#3b8eea',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  d1326: {label:'SPDRゴールド',code:'1326',data:genWalk(48000,55200,650,41),color:'#fbbf24',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+  dQQQ:  {label:'Invesco QQQ',code:'QQQ',data:genWalk(485,548,9,42),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dVOO:  {label:'Vanguard S&P500',code:'VOO',data:genWalk(540,615,8,43),color:'#22d3ee',pre:'$',fmt:v=>Number(v).toFixed(2)},
+  dOLCAN:{label:'eMAXIS Slim全世界株',code:'OLCAN',data:genWalk(28500,32400,360,44),color:'#a78bfa',pre:'¥',fmt:v=>Math.round(v).toLocaleString()},
+};
 
-3. switchToStock 関数を実装：
-   function switchToStock(key, el) {
-     currentKey = key;
-     document.querySelectorAll('[data-key]').forEach(t => t.classList.remove('active-stock'));
-     document.querySelectorAll('[data-key="' + key + '"]').forEach(t => t.classList.add('active-stock'));
-     buildMain(key, currentRange);
-     document.getElementById('mainChart').scrollIntoView({behavior:'smooth', block:'nearest'});
-   }
+// switchToStock（全銘柄共通）
+function switchToStock(key, el){
+  if(!DATA[key]){console.warn('key not found:',key);return;}
+  currentKey=key;
+  document.querySelectorAll('[data-key]').forEach(t=>t.classList.remove('active-stock'));
+  document.querySelectorAll('[data-key="'+key+'"]').forEach(t=>t.classList.add('active-stock'));
+  buildMain(key,currentRange);
+  document.getElementById('mainChart').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+```
 
-4. buildMain 関数で DATA[key] が存在しない場合のフォールバックを実装：
-   function buildMain(key, range) {
-     if (!DATA[key]) { console.warn('key not found:', key); return; }
-     ...
-   }
+## ウォッチリスト
+- 日本株・米国株タブ切替
+- 各行: `<div class="wl-item" data-key="dNVDA" onclick="switchToStock('dNVDA',this)">`
+- 1ヶ月レビューも同様に全行にdata-key+onclick付与
+
 ## 出力ルール
-- 完全な単一HTMLファイル（外部CSS/JS不要、CDNのみOK）
-- web_search で最新の市況データを取得して反映
-- 株価・為替・BTC・主要ニュースは必ず web_search で当日データを取得
-- ヘッダー、本文、フッターまで省略せず完全なHTMLを出力
-- 出力は **```html ... ``` で囲んだコードブロックのみ**、他の説明文は不要
-"""
+- <!DOCTYPE html>から</html>まで完全なHTML
+- ```html コードブロックで囲む"""
 
-USER_PROMPT = f"""今日（{DATE_JP} {WEEKDAY_JP}曜日）の金融ダッシュボードのHTMLを生成してください。
 
-以下のステップで進めてください:
-1. web_search で日経平均、NYダウ、S&P 500、USD/JPY、ビットコイン の最新終値を取得
-2. web_search で当日の経済・国際ニュース上位5-6件を取得
-3. web_search で米国株・日本株の注目銘柄の最新動向を確認
-4. すべての情報を統合して、完全な単一HTMLファイルを生成
-
-出力は **```html で始まり ``` で終わるコードブロックのみ** にしてください。"""
-
-def generate_dashboard():
-    print(f"📊 ダッシュボード生成開始: {DATE_JP}")
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("❌ ANTHROPIC_API_KEY が設定されていません")
-        sys.exit(1)
-
-    client = anthropic.Anthropic(api_key=api_key)
-    print("🔍 Claude が web_search で市況データを収集中...")
-
-    # ストリーミングモードで実行（10分超のリクエストに対応）
-    full_text = ""
+def collect_market_data(client):
+    print("🔍 Phase 1: 市況データ収集中...")
+    result = ""
     with client.messages.stream(
         model="claude-sonnet-4-6",
-        max_tokens=32000,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": USER_PROMPT}],
-        tools=[{
-            "type": "web_search_20250305",
-            "name": "web_search",
-            "max_uses": 12,
-        }],
+        max_tokens=4000,
+        messages=[{"role": "user", "content": DATA_COLLECTION_PROMPT}],
+        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 8}],
     ) as stream:
         for text in stream.text_stream:
-            full_text += text
+            result += text
             print(text, end="", flush=True)
-    print()  # 改行
-
-    # ```html ... ``` を抽出
-    if "```html" in full_text:
-        html = full_text.split("```html", 1)[1].rsplit("```", 1)[0].strip()
-    elif "```" in full_text:
-        html = full_text.split("```", 1)[1].rsplit("```", 1)[0].strip()
-    else:
-        html = full_text.strip()
-
-    if not html.startswith("<!DOCTYPE") and not html.startswith("<html"):
-        print("⚠️  警告: HTMLとして認識できません")
-        print(full_text[:500])
-        sys.exit(1)
-
-    OUTPUT_FILE.write_text(html, encoding="utf-8")
-    print(f"✅ 生成完了: {OUTPUT_FILE}")
-    print(f"   サイズ: {len(html):,} 文字")
-    return OUTPUT_FILE
+    print("\n✅ 収集完了")
+    return result
 
 
-def send_email(html_path: Path):
-    """生成したHTMLをメール添付で送信（オプション）"""
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_pass = os.getenv("SMTP_PASS")
-    mail_to = os.getenv("MAIL_TO")
+def generate_html(client, market_data):
+    print("\n🎨 Phase 2: HTML生成中...")
+    user_prompt = f"""以下の市況データでダッシュボードHTMLを生成してください。
 
-    if not all([smtp_host, smtp_user, smtp_pass, mail_to]):
-        print("📧 メール送信はスキップ（SMTP設定なし）")
-        return
+## 本日の市況データ
+{market_data}
 
-    msg = MIMEMultipart()
-    msg["Subject"] = f"📊 Financial Dashboard {DATE_JP}"
-    msg["From"] = smtp_user
-    msg["To"] = mail_to
+必ずDATAオブジェクトにすべての銘柄を定義し、全ウォッチリスト・レビュー銘柄にdata-key属性とonclickを付与してください。
+```html で始まり ``` で終わるコードブロックで出力してください。"""
 
-    body = f"""おはようございます☀️
-
-{DATE_JP}（{WEEKDAY_JP}曜日）の金融ダッシュボードを添付します。
-
-ファイルをブラウザで開くと、株価チャート・注目銘柄・経済ニュースなどが表示されます。
-
-⚠️ 投資判断はご自身の責任でお願いします。
-"""
-    msg.attach(MIMEText(body, "plain", "utf-8"))
-
-    with open(html_path, "rb") as f:
-        att = MIMEApplication(f.read(), _subtype="html")
-        att.add_header("Content-Disposition", "attachment", filename=html_path.name)
-        msg.attach(att)
-
-    print(f"📧 メール送信中: {mail_to}")
-    with smtplib.SMTP(smtp_host, smtp_port) as smtp:
-        smtp.starttls()
-        smtp.login(smtp_user, smtp_pass)
-        smtp.send_message(msg)
-    print("✅ メール送信完了")
+    result = ""
+    with client.messages.stream(
+        model="claude-sonnet-4-6",
+        max_tokens=16000,
+        system=HTML_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
+    ) as stream:
+        for text in stream.text_stream:
+            result += text
+            print(".", end="", flush=True)
+    print("\n✅ HTML生成完了")
+    return result
 
 
 def main():
-    try:
-        html_path = generate_dashboard()
-        send_email(html_path)  # 設定があれば送信、なければスキップ
-        print("\n🎉 すべて完了しました！")
-    except anthropic.APIError as e:
-        print(f"❌ Anthropic API エラー: {e}")
+    print(f"📊 生成開始: {DATE_JP} {WEEKDAY_JP}曜日")
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("❌ ANTHROPIC_API_KEY が未設定です")
         sys.exit(1)
+
+    client = anthropic.Anthropic(api_key=api_key)
+
+    try:
+        market_data = collect_market_data(client)
+        raw_output = generate_html(client, market_data)
+
+        if "```html" in raw_output:
+            html = raw_output.split("```html", 1)[1].rsplit("```", 1)[0].strip()
+        elif "```" in raw_output:
+            html = raw_output.split("```", 1)[1].rsplit("```", 1)[0].strip()
+        else:
+            html = raw_output.strip()
+
+        if not (html.startswith("<!DOCTYPE") or html.startswith("<html")):
+            print("⚠️ HTML形式として認識できません")
+            print(raw_output[:300])
+            sys.exit(1)
+
+        OUTPUT_FILE.write_text(html, encoding="utf-8")
+        print(f"\n✅ 保存: {OUTPUT_FILE} ({len(html):,}文字)")
+        print("🎉 完了！")
+
     except Exception as e:
-        print(f"❌ エラー: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\n❌ エラー: {e}")
+        import traceback; traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
+```
+
+---
+
+コピペしたら **Commit changes** → **Run workflow** で再実行してください！
+
+---
+
+ちなみに、GitHub Pages の設定はもう済んでいますか？URLが `https://naoto3815.github.io/morning-dashboard/` で確定したなら、**今すぐカレンダーにリマインダーを登録**しておきましょうか？
