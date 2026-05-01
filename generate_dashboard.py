@@ -73,7 +73,32 @@ SYSTEM_PROMPT = """あなたはプロの金融アナリストアシスタント�
 日本株: 三菱UFJ(8306)、東京エレクトロン(8035)、伊藤忠商事(8001)、第一生命HD(8750)、安川電機(6506)、太陽誘電(6976)、日本製鉄(5401)、日本郵船(9101)、花王(4452)、三菱HCキャピタル(8593)
 米国株: NVIDIA(NVDA)、Microsoft(MSFT)、Alphabet(GOOGL)、Broadcom(AVGO)、Apple(AAPL)、Meta(META)、Tesla(TSLA)、TSMC(TSM)、Micron(MU)
 ETF: TOPIX ETF(1306)、SPDRゴールド(1326)、Invesco QQQ、Vanguard S&P 500(VOO)、eMAXIS Slim 全世界株
+## チャートのクリック切替（必須実装）
+以下を必ず実装すること：
 
+1. DATA オブジェクトに全銘柄のデータを定義：
+   - インデックス: nikkei, dow, sp500, forex, btc
+   - 日本株: d8306, d8035, d8001, d8750, d6506, d6976, d5401, d9101, d4452, d8593
+   - 米国株: dNVDA, dMSFT, dGOOGL, dAVGO, dAAPL, dMETA, dTSLA, dTSM, dMU
+   - ETF: d1306, d1326, dQQQ, dVOO, dOLCAN
+
+2. 各銘柄要素に data-key 属性を付与：
+   <div class="review-item" data-key="dNVDA" onclick="switchToStock('dNVDA', this)">
+
+3. switchToStock 関数を実装：
+   function switchToStock(key, el) {
+     currentKey = key;
+     document.querySelectorAll('[data-key]').forEach(t => t.classList.remove('active-stock'));
+     document.querySelectorAll('[data-key="' + key + '"]').forEach(t => t.classList.add('active-stock'));
+     buildMain(key, currentRange);
+     document.getElementById('mainChart').scrollIntoView({behavior:'smooth', block:'nearest'});
+   }
+
+4. buildMain 関数で DATA[key] が存在しない場合のフォールバックを実装：
+   function buildMain(key, range) {
+     if (!DATA[key]) { console.warn('key not found:', key); return; }
+     ...
+   }
 ## 出力ルール
 - 完全な単一HTMLファイル（外部CSS/JS不要、CDNのみOK）
 - web_search で最新の市況データを取得して反映
