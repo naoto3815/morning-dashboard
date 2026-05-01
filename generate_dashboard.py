@@ -217,7 +217,7 @@ if __name__ == "__main__":
 
 ---
 
-コピペしたら **Commit changes** → **Run workflow** で再実行してください！
+
 
 ---
 
