@@ -1,214 +1,380 @@
-import os, sys, json, re
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-import anthropic
-from dotenv import load_dotenv
-
-load_dotenv()
-JST = timezone(timedelta(hours=9))
-TODAY = datetime.now(JST)
-DATE_STR = TODAY.strftime("%Y-%m-%d")
-DATE_JP = TODAY.strftime("%Y年%m月%d日")
-WEEKDAY_JP = ["月","火","水","木","金","土","日"][TODAY.weekday()]
-OUTPUT_DIR = Path(__file__).parent / "output"
-OUTPUT_DIR.mkdir(exist_ok=True)
-OUTPUT_FILE = OUTPUT_DIR / f"financial-dashboard-{DATE_STR}.html"
-TEMPLATE_FILE = Path(__file__).parent / "template.html"
-
-DATA_PROMPT = """今日の金融市況をweb_searchで調べ、以下のJSONのみ出力してください。説明文不要。
-
-{
-  "nikkei_val":"59513","nikkei_chg":"+228","nikkei_pct":"+0.38%","nikkei_dir":"up",
-  "dow_val":"49652","dow_chg":"+790","dow_pct":"+1.62%","dow_dir":"up",
-  "sp500_val":"7204","sp500_chg":"+73","sp500_pct":"+1.02%","sp500_dir":"up",
-  "usdjpy_val":"157.32","usdjpy_chg":"+0.38","usdjpy_dir":"up","usdjpy_note":"介入警戒",
-  "btc_jpy":"11964000","btc_usd":"76052","btc_pct":"-1.71%","btc_dir":"down",
-  "gold_val":"3280","oil_val":"100.12","eurjpy_val":"169.84",
-  "news":[
-    {"tag":"為替","title":"見出し1","body":"詳細1"},
-    {"tag":"マーケット","title":"見出し2","body":"詳細2"},
-    {"tag":"米国経済","title":"見出し3","body":"詳細3"},
-    {"tag":"国際情勢","title":"見出し4","body":"詳細4"},
-    {"tag":"暗号資産","title":"見出し5","body":"詳細5"}
-  ],
-  "events":[
-    {"date":"5月7日","weekday":"木","imp":"高","name":"FOMC結果発表","desc":"早朝3時。利下げ示唆に注目。"},
-    {"date":"5月8日","weekday":"金","imp":"高","name":"米雇用統計(4月)","desc":"21時30分発表。"},
-    {"date":"5月28日","weekday":"水","imp":"高","name":"NVIDIA決算","desc":"AI関連株の方向性を決める。"}
-  ]
+!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Financial Dashboard — __DATE_JP__</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#090e17;--surface:#0f1923;--card:#131e2b;--border:#1e2d3d;--accent:#3b8eea;--green:#34d399;--red:#f87171;--orange:#fb923c;--cyan:#22d3ee;--yellow:#fbbf24;--purple:#a78bfa;--text:#cdd9e5;--text-dim:#7a96b0;--text-bright:#e8f0f8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh}
+.wrap{max-width:1440px;margin:0 auto;padding:24px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.date-main{font-family:'Shippori Mincho',serif;font-size:32px;font-weight:700;color:var(--text-bright)}
+.date-sub{font-size:12px;color:var(--text-dim);margin-top:4px}
+.clock{font-family:'DM Mono',monospace;font-size:28px;color:var(--text-bright);text-align:right}
+.tz{font-size:11px;color:var(--text-dim);text-align:right;margin-top:3px}
+.disc{background:linear-gradient(135deg,rgba(251,191,36,.06),rgba(248,113,113,.06));border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:10px 15px;margin-bottom:14px;font-size:12px;color:var(--yellow);display:flex;gap:8px}
+.tr{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}
+.tc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px 16px;cursor:pointer;transition:border-color .2s;display:flex;flex-direction:column}
+.tc:hover{border-color:rgba(59,142,234,.4)}
+.tc-nm{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px}
+.tc-v{font-family:'DM Mono',monospace;font-size:21px;font-weight:500;color:var(--text-bright);line-height:1;margin-bottom:3px}
+.tc-vs{font-size:16px}
+.tc-s{font-family:'DM Mono',monospace;font-size:10px}
+.tc-s2{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text-dim);margin-top:1px}
+.tc-m{height:40px;margin-top:auto;padding-top:7px}
+.btc-tc{background:linear-gradient(135deg,#131e2b,#1a1810);border-color:rgba(251,146,60,.2)}
+.up{color:var(--green)}.dn{color:var(--red)}
+.badge{font-family:'DM Mono',monospace;font-size:9.5px;padding:2px 7px;border-radius:20px;font-weight:500}
+.b-up{background:rgba(52,211,153,.12);color:var(--green)}
+.b-dn{background:rgba(248,113,113,.12);color:var(--red)}
+.grid{display:grid;grid-template-columns:3fr 2fr;gap:10px}
+.col{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px 18px}
+.lbl{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:5px}
+.lbl::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;flex-wrap:wrap;gap:8px}
+.cn{font-family:'Shippori Mincho',serif;font-size:17px;font-weight:700;color:var(--text-bright)}
+.cc{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);padding:2px 8px;background:var(--surface);border-radius:5px;border:1px solid var(--border)}
+.rbs{display:flex;gap:3px}
+.rb{font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);background:transparent;font-family:'DM Mono',monospace;transition:all .15s}
+.rb.active{background:var(--surface);color:var(--text-bright);border-color:rgba(59,142,234,.4)}
+.cw{position:relative;height:220px}
+.stats{display:flex;gap:12px;margin-top:9px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap}
+.st{display:flex;flex-direction:column;gap:2px}
+.sl{font-size:9px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase}
+.sv{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-bright);font-weight:500}
+.sdiv{width:1px;background:var(--border)}
+.cr{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}
+.com{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.cp{font-size:10px;font-weight:700;color:var(--text-dim);margin-bottom:3px}
+.cv{font-family:'DM Mono',monospace;font-size:15px;color:var(--text-bright)}
+.cc2{font-family:'DM Mono',monospace;font-size:10px;margin-top:2px}
+.nl,.wl{display:flex;flex-direction:column;gap:7px}
+.ni{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.nt{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.nb{font-size:12px;color:var(--text);line-height:1.5}
+.wi{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all .15s}
+.wi:hover{border-color:rgba(59,142,234,.4);background:#172336}
+.wi.as{border-color:var(--accent);background:rgba(59,142,234,.08)}
+.wi.us:hover{border-color:rgba(34,211,238,.4)}
+.wi.us.as{border-color:var(--cyan);background:rgba(34,211,238,.08)}
+.wc{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim)}
+.wn{font-size:12px;color:var(--text-bright);font-weight:700;margin-top:1px}
+.wt{font-size:10px;color:var(--text-dim);margin-top:2px;line-height:1.4}
+.wp{font-family:'DM Mono',monospace;font-size:10px}
+.rts{display:flex;gap:4px;margin-bottom:10px}
+.rt{font-size:11px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);background:transparent;transition:all .15s}
+.rt.active{background:var(--accent);color:white;border-color:var(--accent)}
+.rt.us-rt.active{background:var(--cyan);border-color:var(--cyan)}
+.rc{display:none;flex-direction:column;gap:7px}
+.rc.active{display:flex}
+.rs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.rst{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px;text-align:center}
+.rsl{font-size:9px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.rsv{font-family:'DM Mono',monospace;font-size:17px;font-weight:500}
+.rl{display:flex;flex-direction:column;gap:5px}
+.ri{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all .15s}
+.ri:hover{border-color:rgba(59,142,234,.4);background:#172336}
+.ri.as{border-color:var(--accent);background:rgba(59,142,234,.08)}
+.rn{font-size:11px;color:var(--text-bright);font-weight:700}
+.rc2{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim)}
+.rrr{display:flex;align-items:center;gap:4px}
+.rr{font-family:'DM Mono',monospace;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;white-space:nowrap}
+.r-buy{background:rgba(52,211,153,.15);color:var(--green)}
+.r-strong{background:rgba(52,211,153,.25);color:var(--green);border:1px solid rgba(52,211,153,.4)}
+.r-hold{background:rgba(122,150,176,.15);color:var(--text-dim)}
+.r-watch{background:rgba(251,191,36,.15);color:var(--yellow)}
+.ra{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim)}
+.rp{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;text-align:right;min-width:55px}
+.rsm{margin-top:11px;padding:11px 13px;background:linear-gradient(135deg,rgba(59,142,234,.06),rgba(52,211,153,.04));border:1px solid rgba(59,142,234,.2);border-radius:9px;font-size:11px;color:var(--text);line-height:1.6}
+.rsm strong{color:var(--text-bright)}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.sn{font-size:12px;font-weight:700;color:var(--text-bright)}
+.sr{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:700}
+.sd2{font-size:10px;color:var(--text-dim);line-height:1.4}
+.st2{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);margin-top:4px}
+.el{display:flex;flex-direction:column;gap:6px}
+.ei{display:grid;grid-template-columns:52px 1fr;gap:9px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px}
+.ed{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);text-align:center;line-height:1.3}
+.en{font-size:12px;color:var(--text-bright);font-weight:700}
+.edesc{font-size:10px;color:var(--text-dim);margin-top:2px;line-height:1.4}
+.et{font-family:'DM Mono',monospace;font-size:8px;padding:1px 5px;border-radius:8px;background:rgba(248,113,113,.12);color:var(--red);margin-right:3px;font-weight:700}
+.et-mid{background:rgba(251,191,36,.12);color:var(--yellow)}
+footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:5px}
+.fn{font-size:10px;color:var(--text-dim)}
+.fb{font-family:'DM Mono',monospace;font-size:10px;color:rgba(59,142,234,.4);letter-spacing:.1em}
+.live{display:inline-block;width:5px;height:5px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{animation:fadeUp .3s ease both}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px"><span class="live"></span>FINANCIAL DASHBOARD</div>
+    <div class="date-main">__DATE_JP__</div>
+    <div class="date-sub">__WEEKDAY_JP__曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
+  </div>
+  <div><div class="clock" id="clk">--:--:--</div><div class="tz">JST · UTC+9</div></div>
+</header>
+<div class="disc"><span style="font-size:14px">⚠️</span><div><strong>重要：</strong>本ダッシュボードは情報提供のみを目的とします。掲載内容は公開アナリスト見解の整理であり、特定銘柄の推奨ではありません。投資判断はご自身でお願いします。</div></div>
+ 
+<div class="tr">
+  <div class="tc" onclick="si('nikkei')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">日経平均</div><div class="badge __NIKKEI_BADGE__">__NIKKEI_PCT__</div></div><div class="tc-v">__NIKKEI_VAL__</div><div class="tc-s __NIKKEI_DIR__">__NIKKEI_ARROW__ __NIKKEI_CHG__ pts</div><div class="tc-m"><canvas id="m1"></canvas></div></div>
+  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge __DOW_BADGE__">__DOW_PCT__</div></div><div class="tc-v">__DOW_VAL__</div><div class="tc-s __DOW_DIR__">__DOW_ARROW__ __DOW_CHG__ pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
+  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge __SP500_BADGE__">__SP500_PCT__</div></div><div class="tc-v">__SP500_VAL__</div><div class="tc-s __SP500_DIR__">__SP500_ARROW__ __SP500_CHG__ pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
+  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge __USDJPY_BADGE__">__USDJPY_NOTE__</div></div><div class="tc-v">__USDJPY_VAL__</div><div class="tc-s __USDJPY_DIR__">__USDJPY_ARROW__ __USDJPY_CHG__</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
+  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge __BTC_BADGE__">__BTC_PCT__</div></div><div class="tc-v tc-vs">¥__BTC_JPY_FMT__</div><div class="tc-s __BTC_DIR__">__BTC_ARROW__ リスクオフ</div><div class="tc-s2">≈ $__BTC_USD__ · @¥__USDJPY_VAL__</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
+</div>
+ 
+<div class="grid">
+<div class="col">
+  <div class="card">
+    <div class="lbl">📊 チャート（カード・銘柄をクリックで切替）</div>
+    <div class="ch"><div style="display:flex;align-items:center;gap:9px"><div class="cn" id="cName">日経平均</div><div class="cc" id="cCode">N225</div></div><div class="rbs"><button class="rb" onclick="setR(30,this)">1M</button><button class="rb active" onclick="setR(90,this)">3M</button><button class="rb" onclick="setR(180,this)">6M</button></div></div>
+    <div class="cw"><canvas id="mc"></canvas></div>
+    <div class="stats">
+      <div class="st"><div class="sl">期間始値</div><div class="sv" id="sO">—</div></div><div class="sdiv"></div>
+      <div class="st"><div class="sl">期間高値</div><div class="sv" id="sH" style="color:var(--green)">—</div></div><div class="sdiv"></div>
+      <div class="st"><div class="sl">期間安値</div><div class="sv" id="sL" style="color:var(--red)">—</div></div><div class="sdiv"></div>
+      <div class="st"><div class="sl">現在値</div><div class="sv" id="sC">—</div></div><div class="sdiv"></div>
+      <div class="st"><div class="sl">期間騰落率</div><div class="sv" id="sCh">—</div></div>
+    </div>
+    <div class="cr">
+      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">__EURJPY_VAL__</div><div class="cc2 dn">▼ 介入の余波</div></div>
+      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$__OIL_VAL__</div><div class="cc2 up">▲ 中東緊張</div></div>
+      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$__GOLD_VAL__</div><div class="cc2 up">▲ 安全資産</div></div>
+    </div>
+  </div>
+ 
+  <div class="card">
+    <div class="lbl">📈 1ヶ月評価レビュー（クリックでチャート表示）</div>
+    <div class="rs">
+      <div class="rst"><div class="rsl">推奨平均</div><div class="rsv up">+12.4%</div></div>
+      <div class="rst"><div class="rsl">日経/S&P</div><div class="rsv up">+11%/+6%</div></div>
+      <div class="rst"><div class="rsl">勝率</div><div class="rsv" style="color:var(--accent)">12/15</div></div>
+      <div class="rst"><div class="rsl">ベスト</div><div class="rsv up">NVDA+28%</div></div>
+    </div>
+    <div class="rl">
+      <div class="ri" data-key="d8306" onclick="ss('d8306',this)"><div><div class="rn">三菱UFJ FG</div><div class="rc2">8306 · 銀行·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-strong">強気</span></div><div class="rp up">+14.8%</div></div>
+      <div class="ri" data-key="d8035" onclick="ss('d8035',this)"><div><div class="rn">東京エレクトロン</div><div class="rc2">8035 · 半導体·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-strong">強気</span></div><div class="rp up">+22.5%</div></div>
+      <div class="ri" data-key="dNVDA" onclick="ss('dNVDA',this)"><div><div class="rn">NVIDIA</div><div class="rc2">NVDA · 半導体·US</div></div><div class="rrr"><span class="rr r-strong">強気</span><span class="ra">→</span><span class="rr r-strong">強気</span></div><div class="rp up">+28.1%</div></div>
+      <div class="ri" data-key="dGOOGL" onclick="ss('dGOOGL',this)"><div><div class="rn">Alphabet (Google)</div><div class="rc2">GOOGL · IT·US</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-strong">強気</span></div><div class="rp up">+15.3%</div></div>
+      <div class="ri" data-key="d6506" onclick="ss('d6506',this)"><div><div class="rn">安川電機</div><div class="rc2">6506 · 機械·JP</div></div><div class="rrr"><span class="rr r-strong">強気</span><span class="ra">→</span><span class="rr r-strong">強気</span></div><div class="rp up">+18.3%</div></div>
+      <div class="ri" data-key="d8001" onclick="ss('d8001',this)"><div><div class="rn">伊藤忠商事</div><div class="rc2">8001 · 商社·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-buy">買い</span></div><div class="rp up">+13.2%</div></div>
+      <div class="ri" data-key="dAVGO" onclick="ss('dAVGO',this)"><div><div class="rn">Broadcom</div><div class="rc2">AVGO · 半導体·US</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-buy">買い</span></div><div class="rp up">+11.8%</div></div>
+      <div class="ri" data-key="d6976" onclick="ss('d6976',this)"><div><div class="rn">太陽誘電</div><div class="rc2">6976 · 電子·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-buy">買い</span></div><div class="rp up">+12.6%</div></div>
+      <div class="ri" data-key="d8750" onclick="ss('d8750',this)"><div><div class="rn">第一生命HD</div><div class="rc2">8750 · 保険·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-buy">買い</span></div><div class="rp up">+9.4%</div></div>
+      <div class="ri" data-key="dAAPL" onclick="ss('dAAPL',this)"><div><div class="rn">Apple</div><div class="rc2">AAPL · IT·US</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-hold">中立+</span></div><div class="rp up">+3.8%</div></div>
+      <div class="ri" data-key="d5401" onclick="ss('d5401',this)"><div><div class="rn">日本製鉄</div><div class="rc2">5401 · 鉄鋼·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-buy">買い</span></div><div class="rp up">+8.7%</div></div>
+      <div class="ri" data-key="d9101" onclick="ss('d9101',this)"><div><div class="rn">日本郵船</div><div class="rc2">9101 · 海運·JP</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-watch">注視</span></div><div class="rp up">+5.1%</div></div>
+      <div class="ri" data-key="dTSLA" onclick="ss('dTSLA',this)"><div><div class="rn">Tesla</div><div class="rc2">TSLA · EV·US</div></div><div class="rrr"><span class="rr r-hold">中立</span><span class="ra">→</span><span class="rr r-watch">注視</span></div><div class="rp dn">-5.2%</div></div>
+      <div class="ri" data-key="d4452" onclick="ss('d4452',this)"><div><div class="rn">花王</div><div class="rc2">4452 · 化学·JP</div></div><div class="rrr"><span class="rr r-hold">中立+</span><span class="ra">→</span><span class="rr r-hold">中立+</span></div><div class="rp dn">-2.1%</div></div>
+      <div class="ri" data-key="dMSFT" onclick="ss('dMSFT',this)"><div><div class="rn">Microsoft</div><div class="rc2">MSFT · クラウド·US</div></div><div class="rrr"><span class="rr r-buy">買い</span><span class="ra">→</span><span class="rr r-buy">買い</span></div><div class="rp up">+9.7%</div></div>
+    </div>
+    <div class="rsm"><strong>📊 1ヶ月の振り返り：</strong>15件中12件プラス（勝率80%）、平均+12.4%。<br><strong>✅ 成功：</strong><span class="up">NVIDIA（+28.1%）安川電機（+18.3%）東エレ（+22.5%）Alphabet（+15.3%）</span><br><strong>⚠️ 反省：</strong><span class="dn">Tesla（-5.2%）EV停滞→注視 / 花王（-2.1%）ディフェンシブ逆風</span><br><strong>🔄 戦略：</strong>AI半導体（日米）＋金融（日）継続。海運・EVは選別強化。<br><span style="color:var(--text-dim);font-size:10px">※評価は公開アナリスト見解を基にした推定。リターンは概算値。</span></div>
+  </div>
+ 
+  <div class="card">
+    <div class="lbl">📰 経済・国際ニュース</div>
+    <div class="nl">__NEWS_HTML__</div>
+  </div>
+</div>
+ 
+<div class="col">
+  <div class="card">
+    <div class="lbl">📋 注目銘柄ウォッチリスト</div>
+    <div class="rts"><button class="rt active" onclick="reg('jp',this)">🇯🇵 日本株</button><button class="rt us-rt" onclick="reg('us',this)">🇺🇸 米国株</button></div>
+    <div class="rc active" id="rjp">
+      <div class="wi" data-key="d8750" onclick="ss('d8750',this)"><div><div class="wc">8750 · 大型株</div><div class="wn">第一生命HD</div><div class="wt">好業績＋配当性向引上げ・金利上昇恩恵</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+9.4%</div></div>
+      <div class="wi" data-key="d9101" onclick="ss('d9101',this)"><div><div class="wc">9101 · 海運</div><div class="wn">日本郵船</div><div class="wt">下値不安小・高配当（イラン情勢注意）</div></div><div><div class="badge" style="font-size:9px;background:rgba(251,191,36,.15);color:var(--yellow)">注視</div></div><div class="wp up">+5.1%</div></div>
+      <div class="wi" data-key="d5401" onclick="ss('d5401',this)"><div><div class="wc">5401 · 鉄鋼</div><div class="wn">日本製鉄</div><div class="wt">PBR0.6倍・配当4%・USスチール買収</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+8.7%</div></div>
+      <div class="wi" data-key="d6506" onclick="ss('d6506',this)"><div><div class="wc">6506 · 機械</div><div class="wn">安川電機</div><div class="wt">フィジカルAI・NVIDIA連携</div></div><div><div class="badge b-up" style="font-size:9px">強気</div></div><div class="wp up">+18.3%</div></div>
+      <div class="wi" data-key="d6976" onclick="ss('d6976',this)"><div><div class="wc">6976 · 電子</div><div class="wn">太陽誘電</div><div class="wt">AIサーバー向けMLCC・V字回復</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+12.6%</div></div>
+      <div class="wi" data-key="d4452" onclick="ss('d4452',this)"><div><div class="wc">4452 · 化学</div><div class="wn">花王</div><div class="wt">36期連続増配・ディフェンシブ</div></div><div><div class="badge" style="font-size:9px;background:rgba(122,150,176,.15);color:var(--text-dim)">中立+</div></div><div class="wp dn">-2.1%</div></div>
+      <div class="wi" data-key="d8593" onclick="ss('d8593',this)"><div><div class="wc">8593 · 金融</div><div class="wn">三菱HCキャピタル</div><div class="wt">26期連続増配・利回り2.9%</div></div><div><div class="badge b-up" style="font-size:9px">強気</div></div><div class="wp up">+3.5%</div></div>
+    </div>
+    <div class="rc" id="rus">
+      <div class="wi us" data-key="dNVDA" onclick="ss('dNVDA',this)"><div><div class="wc">NVDA · 半導体</div><div class="wn">NVIDIA</div><div class="wt">AI半導体の覇者。Rubin量産・売上+73%</div></div><div><div class="badge b-up" style="font-size:9px">強気</div></div><div class="wp up">+28.1%</div></div>
+      <div class="wi us" data-key="dMSFT" onclick="ss('dMSFT',this)"><div><div class="wc">MSFT · クラウド</div><div class="wn">Microsoft</div><div class="wt">Azure・OpenAI提携・AI法人需要加速</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+9.7%</div></div>
+      <div class="wi us" data-key="dGOOGL" onclick="ss('dGOOGL',this)"><div><div class="wc">GOOGL · IT</div><div class="wn">Alphabet (Google)</div><div class="wt">TPU「Ironwood」10倍性能・売上+18%</div></div><div><div class="badge b-up" style="font-size:9px">強気</div></div><div class="wp up">+15.3%</div></div>
+      <div class="wi us" data-key="dAVGO" onclick="ss('dAVGO',this)"><div><div class="wc">AVGO · 半導体</div><div class="wn">Broadcom</div><div class="wt">カスタムAIチップ・ハイパースケーラー向け</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+11.8%</div></div>
+      <div class="wi us" data-key="dAAPL" onclick="ss('dAAPL',this)"><div><div class="wc">AAPL · IT</div><div class="wn">Apple</div><div class="wt">AI出遅れ・中国販売懸念</div></div><div><div class="badge" style="font-size:9px;background:rgba(122,150,176,.15);color:var(--text-dim)">中立+</div></div><div class="wp up">+3.8%</div></div>
+      <div class="wi us" data-key="dMETA" onclick="ss('dMETA',this)"><div><div class="wc">META · SNS</div><div class="wn">Meta Platforms</div><div class="wt">広告事業好調・AI収益化が課題</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+7.2%</div></div>
+      <div class="wi us" data-key="dTSLA" onclick="ss('dTSLA',this)"><div><div class="wc">TSLA · EV</div><div class="wn">Tesla</div><div class="wt">EV市場停滞・中国販売不振</div></div><div><div class="badge" style="font-size:9px;background:rgba(251,191,36,.15);color:var(--yellow)">注視</div></div><div class="wp dn">-5.2%</div></div>
+      <div class="wi us" data-key="dTSM" onclick="ss('dTSM',this)"><div><div class="wc">TSM · 半導体</div><div class="wn">TSMC</div><div class="wt">AIチップ製造の独占的地位</div></div><div><div class="badge b-up" style="font-size:9px">買い</div></div><div class="wp up">+13.4%</div></div>
+      <div class="wi us" data-key="dMU" onclick="ss('dMU',this)"><div><div class="wc">MU · 半導体</div><div class="wn">Micron Technology</div><div class="wt">HBM4量産・売上+296%</div></div><div><div class="badge b-up" style="font-size:9px">強気</div></div><div class="wp up">+19.6%</div></div>
+    </div>
+  </div>
+ 
+  <div class="card">
+    <div class="lbl">💼 注目ETF・投資信託</div>
+    <div class="wl">
+      <div class="wi" data-key="d1306" onclick="ss('d1306',this)"><div><div class="wc">1306 · ETF</div><div class="wn">TOPIX連動型ETF</div><div class="wt">日本株コア・低コスト</div></div><div><div class="badge b-up" style="font-size:9px">中長期</div></div><div class="wp up">+10.8%</div></div>
+      <div class="wi us" data-key="dQQQ" onclick="ss('dQQQ',this)"><div><div class="wc">QQQ · ETF</div><div class="wn">Invesco QQQ (NASDAQ100)</div><div class="wt">米ハイテク主導・AI関連の集合体</div></div><div><div class="badge b-up" style="font-size:9px">グロース</div></div><div class="wp up">+9.1%</div></div>
+      <div class="wi us" data-key="dVOO" onclick="ss('dVOO',this)"><div><div class="wc">VOO · ETF</div><div class="wn">Vanguard S&amp;P 500</div><div class="wt">米株コア・経費率0.03%</div></div><div><div class="badge b-up" style="font-size:9px">長期コア</div></div><div class="wp up">+6.2%</div></div>
+      <div class="wi" data-key="d1326" onclick="ss('d1326',this)"><div><div class="wc">1326 · ETF</div><div class="wn">SPDR ゴールド</div><div class="wt">中東・地政学ヘッジ</div></div><div><div class="badge b-up" style="font-size:9px">ヘッジ</div></div><div class="wp up">+6.4%</div></div>
+      <div class="wi" data-key="dOLCAN" onclick="ss('dOLCAN',this)"><div><div class="wc">投信</div><div class="wn">eMAXIS Slim 全世界株</div><div class="wt">NISA定番・長期分散の王道</div></div><div><div class="badge b-up" style="font-size:9px">長期積立</div></div><div class="wp up">+4.2%</div></div>
+    </div>
+  </div>
+ 
+  <div class="card">
+    <div class="lbl">🎯 注目セクター（日米統合）</div>
+    <div class="sg">
+      <div class="sec"><div class="sh"><div class="sn">AI・半導体（米）</div><div class="sr r-strong">STRONG</div></div><div class="sd2">Rubin量産・SOX+40%。AI設備投資6500億ドル</div><div class="st2">NVDA AVGO TSM MU</div></div>
+      <div class="sec"><div class="sh"><div class="sn">AI・半導体（日）</div><div class="sr r-strong">STRONG</div></div><div class="sd2">装置・材料の世界トップシェア</div><div class="st2">8035 6857 6861</div></div>
+      <div class="sec"><div class="sh"><div class="sn">銀行・金融（日）</div><div class="sr r-strong">STRONG</div></div><div class="sd2">「金利のある世界」で構造的恩恵</div><div class="st2">8306 8316 8411</div></div>
+      <div class="sec"><div class="sh"><div class="sn">クラウド・IT（米）</div><div class="sr r-buy">POSITIVE</div></div><div class="sd2">Azure・GCP拡大。AI法人化が加速</div><div class="st2">MSFT GOOGL META</div></div>
+      <div class="sec"><div class="sh"><div class="sn">商社・資源（日）</div><div class="sr r-buy">POSITIVE</div></div><div class="sd2">海外勢4週連続買い越し・原油高</div><div class="st2">8001 8002 8058</div></div>
+      <div class="sec"><div class="sh"><div class="sn">EV・自動車（米）</div><div class="sr r-watch">CAUTION</div></div><div class="sd2">EV市場停滞・関税リスク継続</div><div class="st2">TSLA F GM</div></div>
+    </div>
+  </div>
+ 
+  <div class="card">
+    <div class="lbl">📅 重要経済イベント</div>
+    <div class="el">__EVENTS_HTML__</div>
+  </div>
+</div>
+</div>
+ 
+<footer>
+  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: __DATE_JP__</div>
+  <div class="fb">FINANCIAL DASHBOARD · Claude AI</div>
+</footer>
+</div>
+ 
+<script>
+// ── Clock ──
+function tick(){const n=new Date(),p=v=>String(v).padStart(2,'0');document.getElementById('clk').textContent=p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds())}
+tick();setInterval(tick,1000);
+ 
+// ── Chart setup ──
+Chart.defaults.color='#7a96b0';
+Chart.defaults.font.family="'DM Mono',monospace";
+Chart.defaults.font.size=10;
+var G='#34d399',R='#f87171',A='#3b8eea',P='#a78bfa',O='#fb923c',Y='#fbbf24',C='#22d3ee',BD='#1e2d3d';
+var NN=180;
+ 
+function mkL(){var a=[];for(var i=NN-1;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);a.push((d.getMonth()+1)+'/'+(d.getDate()))}return a}
+var LBL=mkL();
+ 
+function rng(s){return function(){s=(s*9301+49297)%233280;return s/233280}}
+function gW(start,end,vol,seed){
+  var r=rng(seed),inc=[],i,c=0,raw=[start],drift,res;
+  for(i=0;i<NN-1;i++)inc.push((r()-0.5)*2*vol);
+  for(i=0;i<NN-1;i++){c+=inc[i];raw.push(start+c)}
+  drift=(end-(start+c))/(NN-1);
+  res=raw.map(function(v,i){return parseFloat((v+drift*i).toFixed(2))});
+  res[NN-1]=end;return res;
 }
-
-実際の今日のデータに置き換えて出力してください。"""
-
-
-def collect_data(client):
-    print("Phase1: 市況データ収集中...")
-    result = ""
-    with client.messages.stream(
-        model="claude-sonnet-4-6",
-        max_tokens=4000,
-        messages=[{"role": "user", "content": DATA_PROMPT}],
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 8}],
-    ) as stream:
-        for text in stream.text_stream:
-            result += text
-            print(text, end="", flush=True)
-    print("\nPhase1完了")
-    return result
-
-
-def parse_data(raw):
-    match = re.search(r'\{[\s\S]*\}', raw)
-    if not match:
-        return {}
-    try:
-        return json.loads(match.group())
-    except Exception:
-        return {}
-
-
-def g(d, key, default=""):
-    return str(d.get(key, default))
-
-
-def news_html(items):
-    if not items:
-        return '<div class="ni"><div class="nt">情報</div><div class="nb">データ取得中...</div></div>'
-    rows = []
-    for n in items:
-        rows.append(
-            '<div class="ni">'
-            '<div class="nt">' + n.get("tag","") + '</div>'
-            '<div class="nb"><strong>' + n.get("title","") + '</strong>'
-            + (' — ' + n.get("body","") if n.get("body") else "") +
-            '</div></div>'
-        )
-    return "\n".join(rows)
-
-
-def events_html(items):
-    if not items:
-        return ""
-    rows = []
-    for e in items:
-        imp = e.get("imp","中")
-        tc = "et" if imp == "高" else "et et-mid"
-        rows.append(
-            '<div class="ei">'
-            '<div class="ed">' + e.get("date","") + '<br><span style="font-size:14px;color:var(--text-bright)">' + e.get("weekday","") + '</span></div>'
-            '<div><div class="en"><span class="' + tc + '">' + imp + '</span>' + e.get("name","") + '</div>'
-            '<div class="edesc">' + e.get("desc","") + '</div></div>'
-            '</div>'
-        )
-    return "\n".join(rows)
-
-
-def main():
-    print("生成開始:", DATE_JP)
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("エラー: ANTHROPIC_API_KEY未設定")
-        sys.exit(1)
-
-    if not TEMPLATE_FILE.exists():
-        print("エラー: template.html が見つかりません。リポジトリに template.html を追加してください。")
-        sys.exit(1)
-
-    client = anthropic.Anthropic(api_key=api_key)
-
-    try:
-        raw = collect_data(client)
-        d = parse_data(raw)
-
-        def v(key, default):
-            return str(d.get(key, default))
-
-        nikkei_dir = v("nikkei_dir","up")
-        dow_dir    = v("dow_dir","up")
-        sp500_dir  = v("sp500_dir","up")
-        usdjpy_dir = v("usdjpy_dir","up")
-        btc_dir    = v("btc_dir","down")
-
-        def badge(direction):
-            return "b-up" if direction == "up" else "b-dn"
-        def arrow(direction):
-            return "▲" if direction == "up" else "▼"
-        def dircls(direction):
-            return "up" if direction == "up" else "dn"
-        def num(s):
-            return s.replace(",","").replace("+","").strip()
-
-        btc_jpy = v("btc_jpy","11964000")
-        try:
-            btc_jpy_fmt = "{:,}".format(int(num(btc_jpy)))
-        except Exception:
-            btc_jpy_fmt = btc_jpy
-
-        nikkei_val = v("nikkei_val","59513")
-        dow_val    = v("dow_val","49652")
-        sp500_val  = v("sp500_val","7204")
-        usdjpy_val = v("usdjpy_val","157.32")
-
-        template = TEMPLATE_FILE.read_text(encoding="utf-8")
-
-        replacements = {
-            "__DATE_JP__":      DATE_JP,
-            "__WEEKDAY_JP__":   WEEKDAY_JP,
-            "__NIKKEI_VAL__":   nikkei_val,
-            "__NIKKEI_CHG__":   v("nikkei_chg","+228"),
-            "__NIKKEI_PCT__":   v("nikkei_pct","+0.38%"),
-            "__NIKKEI_DIR__":   dircls(nikkei_dir),
-            "__NIKKEI_BADGE__": badge(nikkei_dir),
-            "__NIKKEI_ARROW__": arrow(nikkei_dir),
-            "__NIKKEI_NUM__":   num(nikkei_val),
-            "__DOW_VAL__":      dow_val,
-            "__DOW_CHG__":      v("dow_chg","+790"),
-            "__DOW_PCT__":      v("dow_pct","+1.62%"),
-            "__DOW_DIR__":      dircls(dow_dir),
-            "__DOW_BADGE__":    badge(dow_dir),
-            "__DOW_ARROW__":    arrow(dow_dir),
-            "__DOW_NUM__":      num(dow_val),
-            "__SP500_VAL__":    sp500_val,
-            "__SP500_CHG__":    v("sp500_chg","+73"),
-            "__SP500_PCT__":    v("sp500_pct","+1.02%"),
-            "__SP500_DIR__":    dircls(sp500_dir),
-            "__SP500_BADGE__":  badge(sp500_dir),
-            "__SP500_ARROW__":  arrow(sp500_dir),
-            "__SP500_NUM__":    num(sp500_val),
-            "__USDJPY_VAL__":   usdjpy_val,
-            "__USDJPY_CHG__":   v("usdjpy_chg","+0.38"),
-            "__USDJPY_DIR__":   dircls(usdjpy_dir),
-            "__USDJPY_BADGE__": badge(usdjpy_dir),
-            "__USDJPY_ARROW__": arrow(usdjpy_dir),
-            "__USDJPY_NOTE__":  v("usdjpy_note","介入警戒"),
-            "__USDJPY_NUM__":   num(usdjpy_val),
-            "__BTC_JPY_FMT__":  btc_jpy_fmt,
-            "__BTC_JPY_NUM__":  num(btc_jpy),
-            "__BTC_USD__":      v("btc_usd","76052"),
-            "__BTC_PCT__":      v("btc_pct","-1.71%"),
-            "__BTC_DIR__":      dircls(btc_dir),
-            "__BTC_BADGE__":    badge(btc_dir),
-            "__BTC_ARROW__":    arrow(btc_dir),
-            "__GOLD_VAL__":     v("gold_val","3280"),
-            "__OIL_VAL__":      v("oil_val","100.12"),
-            "__EURJPY_VAL__":   v("eurjpy_val","169.84"),
-            "__NEWS_HTML__":    news_html(d.get("news",[])),
-            "__EVENTS_HTML__":  events_html(d.get("events",[])),
+ 
+var NE=__NIKKEI_NUM__,DE=__DOW_NUM__,SE=__SP500_NUM__,FE=__USDJPY_NUM__,BE=__BTC_JPY_NUM__;
+ 
+var DATA={
+  nikkei:{label:'日経平均',code:'N225',data:gW(38000,NE,800,1),color:G,pre:'',fmt:function(v){return Math.round(v).toLocaleString()}},
+  dow:{label:'NYダウ',code:'DJIA',data:gW(43000,DE,550,2),color:A,pre:'',fmt:function(v){return Math.round(v).toLocaleString()}},
+  sp500:{label:'S&P 500',code:'SPX',data:gW(5800,SE,90,3),color:P,pre:'',fmt:function(v){return Math.round(v).toLocaleString()}},
+  forex:{label:'USD/JPY',code:'FX',data:gW(152,FE,0.6,4),color:R,pre:'¥',fmt:function(v){return Number(v).toFixed(2)}},
+  btc:{label:'BTC(円)',code:'BTC',data:gW(9000000,BE,280000,5),color:O,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d8306:{label:'三菱UFJ FG',code:'8306',data:gW(1580,1815,28,20),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d8035:{label:'東京エレクトロン',code:'8035',data:gW(28000,42500,650,21),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d8001:{label:'伊藤忠商事',code:'8001',data:gW(7200,8450,135,22),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d8750:{label:'第一生命HD',code:'8750',data:gW(3200,3850,55,23),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d6506:{label:'安川電機',code:'6506',data:gW(4100,5180,95,24),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d6976:{label:'太陽誘電',code:'6976',data:gW(3450,4150,72,25),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d5401:{label:'日本製鉄',code:'5401',data:gW(2950,3340,52,26),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d9101:{label:'日本郵船',code:'9101',data:gW(4500,4920,90,27),color:Y,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d4452:{label:'花王',code:'4452',data:gW(6800,6420,90,28),color:R,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d8593:{label:'三菱HCキャピタル',code:'8593',data:gW(1080,1185,18,29),color:G,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  dNVDA:{label:'NVIDIA',code:'NVDA',data:gW(110,182,3.2,30),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dMSFT:{label:'Microsoft',code:'MSFT',data:gW(420,484,7,31),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dGOOGL:{label:'Alphabet',code:'GOOGL',data:gW(178,225,3.8,32),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dAVGO:{label:'Broadcom',code:'AVGO',data:gW(220,288,5.5,33),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dAAPL:{label:'Apple',code:'AAPL',data:gW(218,235,3.6,34),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dMETA:{label:'Meta',code:'META',data:gW(620,712,12,35),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dTSLA:{label:'Tesla',code:'TSLA',data:gW(298,265,9,36),color:R,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dTSM:{label:'TSMC',code:'TSM',data:gW(178,228,4.2,37),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dMU:{label:'Micron',code:'MU',data:gW(380,455,9.5,38),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  d1306:{label:'TOPIX ETF',code:'1306',data:gW(2900,3680,42,40),color:A,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  d1326:{label:'SPDRゴールド',code:'1326',data:gW(48000,55200,650,41),color:Y,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}},
+  dQQQ:{label:'Invesco QQQ',code:'QQQ',data:gW(485,548,9,42),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dVOO:{label:'Vanguard S&P500',code:'VOO',data:gW(540,615,8,43),color:C,pre:'$',fmt:function(v){return Number(v).toFixed(2)}},
+  dOLCAN:{label:'eMAXIS Slim全世界株',code:'OLCAN',data:gW(28500,32400,360,44),color:P,pre:'¥',fmt:function(v){return Math.round(v).toLocaleString()}}
+};
+ 
+function upSt(k,rg){
+  var ds=DATA[k],sl=ds.data.slice(NN-rg);
+  var o=sl[0],c=sl[sl.length-1],h=Math.max.apply(null,sl),l=Math.min.apply(null,sl);
+  var pct=(((c-o)/o)*100).toFixed(2),sgn=Number(pct)>=0?'+':'';
+  document.getElementById('sO').textContent=ds.pre+ds.fmt(o);
+  document.getElementById('sH').textContent=ds.pre+ds.fmt(h);
+  document.getElementById('sL').textContent=ds.pre+ds.fmt(l);
+  document.getElementById('sC').textContent=ds.pre+ds.fmt(c);
+  var el=document.getElementById('sCh');
+  el.textContent=sgn+pct+'%';
+  el.style.color=Number(pct)>=0?'var(--green)':'var(--red)';
+}
+ 
+function mn(id,data,color){
+  var ctx=document.getElementById(id).getContext('2d');
+  var sl=data.slice(-30),g=ctx.createLinearGradient(0,0,0,40);
+  g.addColorStop(0,color+'44');g.addColorStop(1,color+'00');
+  new Chart(ctx,{type:'line',data:{labels:LBL.slice(-30),datasets:[{data:sl,borderColor:color,borderWidth:1.5,backgroundColor:g,fill:true,tension:0.35,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+}
+mn('m1',DATA.nikkei.data,G);
+mn('m2',DATA.dow.data,A);
+mn('m3',DATA.sp500.data,P);
+mn('m4',DATA.forex.data,R);
+mn('m5',DATA.btc.data,O);
+ 
+var MC,CK='nikkei',CR=90;
+function bM(k,rg){
+  if(!DATA[k]){console.warn('key not found:',k);return}
+  var ds=DATA[k],sd=ds.data.slice(NN-rg),sl=LBL.slice(NN-rg);
+  document.getElementById('cName').textContent=ds.label;
+  document.getElementById('cCode').textContent=ds.code;
+  var ctx=document.getElementById('mc').getContext('2d');
+  var g=ctx.createLinearGradient(0,0,0,220);
+  g.addColorStop(0,ds.color+'28');g.addColorStop(1,ds.color+'00');
+  if(MC)MC.destroy();
+  MC=new Chart(ctx,{
+    type:'line',
+    data:{labels:sl,datasets:[{label:ds.label,data:sd,borderColor:ds.color,borderWidth:2,backgroundColor:g,fill:true,tension:0.3,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:ds.color,pointHoverBorderColor:'#0f1923',pointHoverBorderWidth:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#131e2b',borderColor:BD,borderWidth:1,titleColor:'#7a96b0',bodyColor:ds.color,padding:9,
+          callbacks:{
+            title:function(i){return '  '+i[0].label},
+            label:function(c){return '  '+ds.label+': '+ds.pre+ds.fmt(c.parsed.y)}
+          }
         }
-
-        html = template
-        for k, val in replacements.items():
-            html = html.replace(k, val)
-
-        OUTPUT_FILE.write_text(html, encoding="utf-8")
-        print("保存完了:", OUTPUT_FILE, "(" + str(len(html)) + "文字)")
-        print("完了!")
-
-    except Exception as e:
-        print("エラー:", e)
-        import traceback; traceback.print_exc()
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+      },
+      scales:{
+        x:{grid:{color:BD,drawTicks:false},ticks:{maxTicksLimit:rg<=30?7:rg<=90?9:12,maxRotation:0},border:{color:BD}},
+        y:{position:'right',grid:{color:BD,drawTicks:false},ticks:{callback:function(v){return ds.pre+Number(v).toLocaleString()}},border:{color:BD}}
+      },
+      animation:{duration:300}
+    }
+  });
+  upSt(k,rg);
+}
+bM('nikkei',90);
+ 
+function ca(){document.querySelectorAll('[data-key]').forEach(function(t){t.classList.remove('as')})}
+function si(k){CK=k;ca();bM(k,CR);document.getElementById('mc').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function ss(k,el){if(!DATA[k])return;CK=k;ca();document.querySelectorAll('[data-key="'+k+'"]').forEach(function(t){t.classList.add('as')});bM(k,CR);document.getElementById('mc').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function setR(rg,btn){CR=rg;document.querySelectorAll('.rb').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');bM(CK,rg)}
+function reg(r,btn){document.querySelectorAll('.rt').forEach(function(t){t.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.rc').forEach(function(c){c.classList.remove('active')});document.getElementById('r'+r).classList.add('active')}
+</script>
+</body>
+</html>
