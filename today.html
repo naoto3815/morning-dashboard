@@ -3,1417 +3,678 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>金融ダッシュボード | 2026年05月02日</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<title>Market Dashboard — 2026/05/02</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #090e17;
-    --card: #131e2b;
-    --card2: #1a2638;
-    --border: #1e2f45;
-    --accent: #3b8eea;
-    --green: #34d399;
-    --red: #f87171;
-    --orange: #fb923c;
-    --cyan: #22d3ee;
-    --yellow: #fbbf24;
-    --purple: #a78bfa;
-    --text: #e2e8f0;
-    --text-muted: #64748b;
-    --text-dim: #94a3b8;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 13px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-  .mono { font-family: 'DM Mono', monospace; }
-  .mincho { font-family: 'Shippori Mincho', serif; }
+:root{
+  --bg:#090e17;--surface:#0f1923;--card:#131e2b;--border:#1e2d3d;
+  --accent:#3b8eea;--green:#34d399;--red:#f87171;--orange:#fb923c;
+  --cyan:#22d3ee;--yellow:#fbbf24;--purple:#a78bfa;
+  --text:#cdd9e5;--text-dim:#7a96b0;--text-bright:#e8f0f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border)}
 
-  /* ─── HEADER ─── */
-  header {
-    background: linear-gradient(90deg, #0a1525 0%, #0d1e35 50%, #0a1525 100%);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'DM Mono', monospace;
-    font-size: 15px;
-    color: var(--accent);
-    font-weight: 500;
-    letter-spacing: 0.05em;
-  }
-  .header-logo span { color: var(--text-dim); font-size: 11px; }
-  .header-center {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-  }
-  .live-dot {
-    width: 7px; height: 7px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-    display: inline-block;
-    margin-right: 4px;
-  }
-  @keyframes pulse {
-    0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(52,211,153,.4); }
-    50% { opacity:.7; box-shadow: 0 0 0 5px rgba(52,211,153,0); }
-  }
-  .header-date {
-    font-size: 13px;
-    color: var(--text);
-    font-weight: 500;
-  }
-  .header-time {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  .header-right { display: flex; gap: 8px; align-items: center; }
-  .badge {
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-    border: 1px solid;
-    letter-spacing: 0.04em;
-  }
-  .badge-sat { background: rgba(167,139,250,.12); color: var(--purple); border-color: rgba(167,139,250,.3); }
-  .badge-gw  { background: rgba(251,191,36,.12);  color: var(--yellow); border-color: rgba(251,191,36,.3); }
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'DM Mono',monospace;color:var(--accent);font-size:15px;font-weight:500;letter-spacing:.05em}
+.logo span{color:var(--text-dim);font-size:11px;margin-left:8px}
+.header-time{font-family:'DM Mono',monospace;font-size:13px;color:var(--text-bright);text-align:right}
+.header-time .date{color:var(--text-dim);font-size:11px}
 
-  /* ─── DISCLAIMER ─── */
-  .disclaimer {
-    background: linear-gradient(90deg, rgba(251,191,36,.08), rgba(251,191,36,.04));
-    border-top: 1px solid rgba(251,191,36,.35);
-    border-bottom: 1px solid rgba(251,191,36,.35);
-    padding: 8px 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
-    color: #f9c74f;
-  }
-  .disclaimer-icon { font-size: 14px; flex-shrink: 0; }
-  .disclaimer strong { font-weight: 700; }
+/* DISCLAIMER */
+.disclaimer{background:#1a1500;border-bottom:2px solid var(--yellow);padding:6px 20px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--yellow)}
+.disclaimer strong{font-size:12px}
 
-  /* ─── TICKER STRIP ─── */
-  .ticker-strip {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-  .ticker-card {
-    background: var(--card);
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background .18s;
-    position: relative;
-    overflow: hidden;
-  }
-  .ticker-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent);
-    opacity: 0;
-    transition: opacity .18s;
-  }
-  .ticker-card:hover, .ticker-card.active {
-    background: var(--card2);
-  }
-  .ticker-card:hover::before, .ticker-card.active::before { opacity: 1; }
-  .ticker-card.active::before { background: var(--accent); }
-  .ticker-label {
-    font-size: 10px;
-    color: var(--text-muted);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: .06em;
-    margin-bottom: 2px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .ticker-flag { font-size: 12px; }
-  .ticker-name { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
-  .ticker-price {
-    font-family: 'DM Mono', monospace;
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 3px;
-  }
-  .ticker-change {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .up { color: var(--green); }
-  .dn { color: var(--red); }
-  .btc-color { color: var(--orange); }
-  .us-color  { color: var(--cyan); }
+/* TICKER BAR */
+.ticker-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;gap:10px;overflow-x:auto}
+.ticker-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 14px;min-width:160px;cursor:pointer;transition:border-color .2s,transform .2s}
+.ticker-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.ticker-card.active{border-color:var(--accent);background:#0d1e35}
+.ticker-name{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace}
+.ticker-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--text-bright);margin:2px 0}
+.ticker-chg{font-family:'DM Mono',monospace;font-size:11px}
+.up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--text-dim)}
 
-  /* ─── MAIN LAYOUT ─── */
-  .main-layout {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 0;
-    min-height: calc(100vh - 140px);
-  }
-  .left-col {
-    border-right: 1px solid var(--border);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  .right-col {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
+/* MAIN LAYOUT */
+.main{display:grid;grid-template-columns:3fr 2fr;gap:12px;padding:12px 20px;max-width:1800px;margin:0 auto}
+@media(max-width:1100px){.main{grid-template-columns:1fr}}
 
-  /* ─── SECTION TITLE ─── */
-  .section-title {
-    font-size: 11px;
-    font-family: 'DM Mono', monospace;
-    color: var(--text-muted);
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+.card+.card{margin-top:10px}
+.card-title{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:inline-block;width:3px;height:12px;background:var(--accent);border-radius:2px}
 
-  /* ─── CHART PANEL ─── */
-  .chart-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .chart-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .chart-title-block { display: flex; flex-direction: column; gap: 2px; }
-  .chart-symbol {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--accent);
-    font-weight: 500;
-  }
-  .chart-full-name { font-size: 11px; color: var(--text-muted); }
-  .chart-controls { display: flex; gap: 4px; align-items: center; }
-  .period-btn {
-    padding: 3px 8px;
-    border-radius: 3px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-    cursor: pointer;
-    transition: all .15s;
-  }
-  .period-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .period-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .chart-stats {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    border-bottom: 1px solid var(--border);
-  }
-  .stat-item {
-    padding: 8px 12px;
-    border-right: 1px solid var(--border);
-  }
-  .stat-item:last-child { border-right: none; }
-  .stat-label { font-size: 9px; color: var(--text-muted); font-family: 'DM Mono', monospace; letter-spacing:.05em; }
-  .stat-value { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text); margin-top: 1px; }
-  .chart-container { padding: 12px 16px 16px; height: 220px; position: relative; }
+/* CHART */
+.chart-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.chart-title-area .stock-name{font-size:16px;font-weight:700;color:var(--text-bright);font-family:'Shippori Mincho',serif}
+.chart-title-area .stock-sub{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace}
+.period-btns{display:flex;gap:4px}
+.period-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;transition:.15s}
+.period-btn:hover{border-color:var(--accent);color:var(--accent)}
+.period-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.stat-bar{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+.stat-item{display:flex;flex-direction:column;gap:1px}
+.stat-label{font-size:9px;color:var(--text-dim);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.stat-value{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-bright);font-weight:500}
+.stat-pct{font-family:'DM Mono',monospace;font-size:11px}
+canvas{display:block}
 
-  /* ─── REVIEW TABLE ─── */
-  .review-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .review-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .review-table { width: 100%; border-collapse: collapse; }
-  .review-table th {
-    padding: 7px 12px;
-    text-align: left;
-    font-size: 9px;
-    font-family: 'DM Mono', monospace;
-    color: var(--text-muted);
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    background: rgba(30,47,69,.4);
-    border-bottom: 1px solid var(--border);
-  }
-  .review-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(30,47,69,.6);
-    font-size: 12px;
-    vertical-align: middle;
-  }
-  .review-table tr:last-child td { border-bottom: none; }
-  .review-table tr:hover td { background: rgba(59,142,234,.04); }
-  .ticker-link {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    cursor: pointer;
-    font-weight: 500;
-  }
-  .ticker-link:hover { text-decoration: underline; }
-  .rating-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 9px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-  }
-  .rating-buy { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.3); }
-  .rating-hold { background: rgba(251,191,36,.12); color: var(--yellow); border: 1px solid rgba(251,191,36,.3); }
-  .rating-watch { background: rgba(59,142,234,.12); color: var(--accent); border: 1px solid rgba(59,142,234,.3); }
-  .arrow-icon { font-size: 14px; margin: 0 3px; color: var(--text-muted); }
+/* REVIEW */
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media(max-width:700px){.review-grid{grid-template-columns:1fr}}
+.review-row{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:7px 10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:.15s}
+.review-row:hover{border-color:var(--accent);background:#0d1e35}
+.review-name{font-size:12px;color:var(--text-bright);font-weight:500}
+.review-sub{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace}
+.review-right{text-align:right}
+.review-pct{font-family:'DM Mono',monospace;font-size:12px;font-weight:600}
+.review-note{font-size:10px;color:var(--text-dim)}
 
-  /* ─── NEWS ─── */
-  .news-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .news-item {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(30,47,69,.6);
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    cursor: default;
-    transition: background .15s;
-  }
-  .news-item:last-child { border-bottom: none; }
-  .news-item:hover { background: rgba(59,142,234,.03); }
-  .news-cat {
-    flex-shrink: 0;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 9px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    letter-spacing: .04em;
-    margin-top: 1px;
-  }
-  .cat-fx    { background: rgba(34,211,238,.12); color: var(--cyan); border: 1px solid rgba(34,211,238,.25); }
-  .cat-boj   { background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.25); }
-  .cat-us    { background: rgba(59,142,234,.12); color: var(--accent); border: 1px solid rgba(59,142,234,.25); }
-  .cat-jp    { background: rgba(52,211,153,.12); color: var(--green); border: 1px solid rgba(52,211,153,.25); }
-  .cat-oil   { background: rgba(251,146,60,.12); color: var(--orange); border: 1px solid rgba(251,146,60,.25); }
-  .cat-btc   { background: rgba(251,191,36,.12); color: var(--yellow); border: 1px solid rgba(251,191,36,.25); }
-  .news-body { flex: 1; }
-  .news-headline { font-size: 12.5px; color: var(--text); font-weight: 500; line-height: 1.45; margin-bottom: 3px; }
-  .news-meta { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+/* NEWS */
+.news-item{border-left:3px solid var(--border);padding:8px 10px;margin-bottom:8px;transition:.15s}
+.news-item:last-child{margin-bottom:0}
+.news-tag{display:inline-block;font-size:9px;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:3px;margin-bottom:4px;font-weight:600;letter-spacing:.05em}
+.tag-fx{background:#1a2a1a;color:var(--green);border:1px solid var(--green)}
+.tag-market{background:#0d1e35;color:var(--accent);border:1px solid var(--accent)}
+.tag-us{background:#1e1a0d;color:var(--yellow);border:1px solid var(--yellow)}
+.tag-geo{background:#1e0d0d;color:var(--red);border:1px solid var(--red)}
+.tag-crypto{background:#1a0d1e;color:var(--purple);border:1px solid var(--purple)}
+.news-title{font-size:12px;color:var(--text-bright);font-weight:600;margin-bottom:3px;line-height:1.4}
+.news-body{font-size:11px;color:var(--text-dim);line-height:1.55}
 
-  /* ─── TABS ─── */
-  .tab-group {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-  }
-  .tab-btn {
-    padding: 9px 16px;
-    font-size: 11px;
-    font-family: 'DM Mono', monospace;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--text-muted);
-    letter-spacing: .04em;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: all .15s;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+/* WATCHLIST */
+.tab-group{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:5px;overflow:hidden}
+.tab-btn{flex:1;padding:5px;background:transparent;border:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:.15s}
+.tab-btn.active{background:var(--accent);color:#fff}
+.wl-section{display:none}
+.wl-section.active{display:block}
+.wl-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s}
+.wl-row:last-child{border-bottom:none}
+.wl-row:hover{background:rgba(59,142,234,.05);margin:0 -4px;padding:6px 4px;border-radius:4px}
+.wl-name{font-size:12px;color:var(--text-bright);font-weight:500}
+.wl-code{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace}
+.wl-price{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-bright);text-align:right}
+.wl-chg{font-family:'DM Mono',monospace;font-size:11px;text-align:right;min-width:60px}
 
-  /* ─── WATCHLIST ─── */
-  .watch-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .watch-header {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .watch-item {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    border-bottom: 1px solid rgba(30,47,69,.5);
-    cursor: pointer;
-    transition: background .15s;
-  }
-  .watch-item:last-child { border-bottom: none; }
-  .watch-item:hover { background: rgba(59,142,234,.05); }
-  .watch-sym {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    font-weight: 500;
-  }
-  .watch-name { font-size: 10px; color: var(--text-muted); }
-  .watch-price { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); text-align: right; }
-  .watch-chg { font-family: 'DM Mono', monospace; font-size: 11px; text-align: right; }
-  .micro-bar {
-    height: 2px;
-    border-radius: 1px;
-    margin-top: 3px;
-    background: rgba(59,142,234,.2);
-    position: relative;
-    overflow: hidden;
-  }
-  .micro-bar-fill { height: 100%; border-radius: 1px; transition: width .3s; }
+/* ETF */
+.etf-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s}
+.etf-row:last-child{border-bottom:none}
+.etf-row:hover{background:rgba(59,142,234,.05);margin:0 -4px;padding:5px 4px;border-radius:4px}
+.etf-name{font-size:12px;color:var(--text-bright)}
+.etf-code{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace}
+.etf-right{text-align:right}
+.etf-price{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-bright)}
+.etf-chg{font-family:'DM Mono',monospace;font-size:11px}
 
-  /* ─── ETF ─── */
-  .etf-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .etf-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 9px 14px;
-    border-bottom: 1px solid rgba(30,47,69,.5);
-    cursor: pointer;
-    transition: background .15s;
-    gap: 8px;
-  }
-  .etf-item:last-child { border-bottom: none; }
-  .etf-item:hover { background: rgba(59,142,234,.05); }
-  .etf-left { display: flex; flex-direction: column; gap: 2px; }
-  .etf-sym { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); font-weight: 500; }
-  .etf-name { font-size: 10px; color: var(--text-muted); }
-  .etf-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .etf-price { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); }
-  .etf-chg { font-family: 'DM Mono', monospace; font-size: 11px; }
+/* SECTOR */
+.sector-row{display:grid;grid-template-columns:1fr 60px 8px;gap:6px;align-items:center;margin-bottom:6px}
+.sector-name{font-size:11px;color:var(--text)}
+.sector-pct{font-family:'DM Mono',monospace;font-size:11px;text-align:right}
+.sector-bar-wrap{height:4px;background:var(--border);border-radius:2px;overflow:hidden;grid-column:1/-1}
+.sector-bar{height:100%;border-radius:2px}
 
-  /* ─── SECTOR ─── */
-  .sector-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    padding: 14px 16px;
-  }
-  .sector-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-top: 10px;
-  }
-  .sector-item {
-    background: var(--card2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 7px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .sector-name { font-size: 11px; color: var(--text-dim); }
-  .sector-chg { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; }
+/* EVENTS */
+.event-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.event-row:last-child{border-bottom:none}
+.event-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);white-space:nowrap;min-width:60px;padding-top:2px}
+.event-body{}
+.event-name{font-size:12px;color:var(--text-bright);font-weight:600}
+.event-desc{font-size:10px;color:var(--text-dim);margin-top:1px}
+.imp-high{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:4px;vertical-align:middle}
+.imp-mid{display:inline-block;width:6px;height:6px;background:var(--yellow);border-radius:50%;margin-right:4px;vertical-align:middle}
 
-  /* ─── EVENTS ─── */
-  .events-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    padding: 14px 16px;
-  }
-  .event-item {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 7px 0;
-    border-bottom: 1px solid rgba(30,47,69,.4);
-  }
-  .event-item:last-child { border-bottom: none; }
-  .event-date {
-    flex-shrink: 0;
-    width: 44px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--accent);
-    font-weight: 500;
-    line-height: 1.5;
-  }
-  .event-body { flex: 1; }
-  .event-title { font-size: 11.5px; color: var(--text); margin-bottom: 2px; line-height: 1.4; }
-  .event-imp {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    margin-left: 4px;
-    vertical-align: middle;
-  }
-  .imp-high { background: var(--red); box-shadow: 0 0 4px rgba(248,113,113,.5); }
-  .imp-mid  { background: var(--yellow); }
-  .imp-low  { background: var(--green); }
-  .event-region { font-size: 9px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
-
-  /* ─── FOOTER ─── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 12px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 10px;
-    color: var(--text-muted);
-    font-family: 'DM Mono', monospace;
-    background: var(--card);
-  }
-  footer a { color: var(--text-muted); text-decoration: none; }
-  footer a:hover { color: var(--accent); }
-
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #2a3f5a; }
-
-  /* ─── UTILITIES ─── */
-  .flex-between { display: flex; justify-content: space-between; align-items: center; }
-  .font-mono { font-family: 'DM Mono', monospace; }
-  .text-xs { font-size: 10px; }
-  .text-muted { color: var(--text-muted); }
-  .mb-0 { margin-bottom: 0; }
-  .tag-jp { color: #ff7b72; }
-  .tag-us { color: var(--cyan); }
+/* NOTE */
+.market-note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:5px;padding:10px 12px;font-size:11px;color:var(--text-dim);line-height:1.7;margin-top:10px}
+.market-note strong{color:var(--cyan)}
 </style>
 </head>
 <body>
 
-<!-- ─── HEADER ─── -->
 <header>
-  <div class="header-logo">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <rect x="1" y="11" width="3" height="8" rx="1" fill="#3b8eea"/>
-      <rect x="5.5" y="7" width="3" height="12" rx="1" fill="#3b8eea" opacity=".8"/>
-      <rect x="10" y="3" width="3" height="16" rx="1" fill="#3b8eea" opacity=".6"/>
-      <rect x="14.5" y="6" width="3" height="13" rx="1" fill="#34d399" opacity=".9"/>
-    </svg>
-    FIN<span style="color:var(--accent)">SIGHT</span>
-    <span>/ PRO TERMINAL</span>
-  </div>
-  <div class="header-center">
-    <span><span class="live-dot"></span>LIVE</span>
-    <span class="header-date">2026年05月02日（土）</span>
-    <span class="header-time" id="clock">JST --:--:--</span>
-  </div>
-  <div class="header-right">
-    <span class="badge badge-sat">SAT</span>
-    <span class="badge badge-gw">🎏 GW中</span>
+  <div class="logo">MARKET DASHBOARD <span>Bloomberg Style</span></div>
+  <div class="header-time">
+    <div class="date">2026年05月02日 土曜日</div>
+    <div id="clock">--:--:--</div>
   </div>
 </header>
 
-<!-- ─── DISCLAIMER ─── -->
 <div class="disclaimer">
-  <span class="disclaimer-icon">⚠️</span>
-  <div>
-    <strong>免責事項：</strong>
-    本ダッシュボードは情報提供のみを目的としており、特定銘柄の売買を推奨・勧誘するものではありません。掲載データはウェブ検索結果を基に作成した参考値であり、正確性・完全性を保証しません。投資判断はご自身の責任において行ってください。当サービスは金融商品取引業者ではありません。
-  </div>
+  <strong>⚠ 免責事項:</strong>
+  本ダッシュボードは情報提供のみを目的としており、投資助言ではありません。チャートデータは参考用の模擬データです。投資判断は自己責任でお願いします。データは速報値・推計値を含む場合があります。
 </div>
 
-<!-- ─── TICKER STRIP ─── -->
-<div class="ticker-strip">
-  <!-- 日経平均 -->
-  <div class="ticker-card active" data-sym="NK225" data-name="日経平均株価" data-price="59513.12" data-prev="59284.92" data-high="59890.10" data-low="58920.40" data-open="59380.50" onclick="switchChart(this,'NK225','日経平均株価',59513.12,59284.92,59890.10,58920.40,59380.50,'jp')">
-    <div class="ticker-label"><span>🇯🇵 NK225</span><span class="ticker-flag">JPY</span></div>
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-card active" data-key="nikkei" onclick="switchToStock('nikkei',this)">
     <div class="ticker-name">日経平均</div>
-    <div class="ticker-price mono">59,513<span style="font-size:13px">.12</span></div>
-    <div class="ticker-change">
-      <span class="up">▲ 228.20</span>
-      <span class="up">+0.38%</span>
-    </div>
+    <div class="ticker-val">59,430</div>
+    <div class="ticker-chg flat">先物ベース</div>
   </div>
-  <!-- NYダウ -->
-  <div class="ticker-card" data-sym="DJI" data-name="NYダウ工業株30種" data-price="49652.14" data-prev="48861.81" data-high="49820.50" data-low="48700.30" data-open="48890.00" onclick="switchChart(this,'DJI','NYダウ工業株30種',49652.14,48861.81,49820.50,48700.30,48890.00,'us')">
-    <div class="ticker-label"><span>🇺🇸 DJI</span><span class="ticker-flag">USD</span></div>
-    <div class="ticker-name">NYダウ</div>
-    <div class="ticker-price mono us-color">49,652<span style="font-size:13px">.14</span></div>
-    <div class="ticker-change">
-      <span class="up">▲ 790.33</span>
-      <span class="up">+1.62%</span>
-    </div>
+  <div class="ticker-card" data-key="dow" onclick="switchToStock('dow',this)">
+    <div class="ticker-name">NY ダウ</div>
+    <div class="ticker-val">49,678</div>
+    <div class="ticker-chg up">+26 (+0.05%)</div>
   </div>
-  <!-- S&P 500 -->
-  <div class="ticker-card" data-sym="SPX" data-name="S&P 500" data-price="7219.83" data-prev="7119.60" data-high="7235.40" data-low="7095.20" data-open="7130.00" onclick="switchChart(this,'SPX','S&P 500',7219.83,7119.60,7235.40,7095.20,7130.00,'us')">
-    <div class="ticker-label"><span>🇺🇸 SPX</span><span class="ticker-flag">USD</span></div>
+  <div class="ticker-card" data-key="sp500" onclick="switchToStock('sp500',this)">
     <div class="ticker-name">S&P 500</div>
-    <div class="ticker-price mono us-color">7,219<span style="font-size:13px">.83</span></div>
-    <div class="ticker-change">
-      <span class="up">▲ 100.23</span>
-      <span class="up">+1.41%</span>
-    </div>
+    <div class="ticker-val">—</div>
+    <div class="ticker-chg flat">4月 最高上昇率</div>
   </div>
-  <!-- USD/JPY -->
-  <div class="ticker-card" data-sym="USDJPY" data-name="米ドル/円" data-price="157.21" data-prev="160.13" data-high="160.80" data-low="155.40" data-open="159.80" onclick="switchChart(this,'USDJPY','米ドル / 円',157.21,160.13,160.80,155.40,159.80,'fx')">
-    <div class="ticker-label"><span>💱 USD/JPY</span><span class="ticker-flag">FX</span></div>
-    <div class="ticker-name">ドル円</div>
-    <div class="ticker-price mono" style="color:var(--yellow)">157<span style="font-size:13px">.21</span></div>
-    <div class="ticker-change">
-      <span class="dn">▼ 2.92</span>
-      <span class="dn">-1.82%</span>
-    </div>
+  <div class="ticker-card" data-key="forex" onclick="switchToStock('forex',this)">
+    <div class="ticker-name">USD/JPY</div>
+    <div class="ticker-val">157.03</div>
+    <div class="ticker-chg down">−3.00 (介入後)</div>
   </div>
-  <!-- BTC/JPY -->
-  <div class="ticker-card" data-sym="BTCJPY" data-name="ビットコイン円建" data-price="12050000" data-prev="12300000" data-high="12420000" data-low="11890000" data-open="12280000" onclick="switchChart(this,'BTCJPY','ビットコイン / 円',12050000,12300000,12420000,11890000,12280000,'btc')">
-    <div class="ticker-label"><span>₿ BTC/JPY</span><span class="ticker-flag">CRYPTO</span></div>
-    <div class="ticker-name">ビットコイン</div>
-    <div class="ticker-price mono btc-color" style="font-size:15px">1,205<span style="font-size:11px">万円</span></div>
-    <div class="ticker-change">
-      <span class="dn">▼ 250,000</span>
-      <span class="dn">-2.03%</span>
-    </div>
+  <div class="ticker-card" data-key="btc" onclick="switchToStock('btc',this)">
+    <div class="ticker-name">BTC / JPY</div>
+    <div class="ticker-val">¥12.0M</div>
+    <div class="ticker-chg down">↓ 調整中</div>
   </div>
 </div>
 
-<!-- ─── MAIN LAYOUT ─── -->
-<div class="main-layout">
-
-  <!-- ═══ LEFT COLUMN ═══ -->
-  <div class="left-col">
-
-    <!-- CHART PANEL -->
-    <div class="chart-panel">
+<div class="main">
+  <!-- LEFT COL -->
+  <div>
+    <!-- CHART -->
+    <div class="card">
       <div class="chart-header">
-        <div class="chart-title-block">
-          <div class="chart-symbol" id="chart-sym">NK225</div>
-          <div class="chart-full-name" id="chart-fullname">日経平均株価</div>
+        <div class="chart-title-area">
+          <div class="stock-name" id="chartTitle">日経平均先物</div>
+          <div class="stock-sub" id="chartSub">NIKKEI FUTURES / CME</div>
         </div>
-        <div class="chart-controls">
-          <button class="period-btn active" onclick="setPeriod(1,'1M')">1M</button>
-          <button class="period-btn" onclick="setPeriod(3,'3M')">3M</button>
-          <button class="period-btn" onclick="setPeriod(6,'6M')">6M</button>
-        </div>
-      </div>
-      <div class="chart-stats">
-        <div class="stat-item">
-          <div class="stat-label">始値</div>
-          <div class="stat-value mono" id="stat-open">59,380.50</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">高値</div>
-          <div class="stat-value up" id="stat-high">59,890.10</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">安値</div>
-          <div class="stat-value dn" id="stat-low">58,920.40</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">現在値</div>
-          <div class="stat-value mono" id="stat-cur">59,513.12</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">騰落率</div>
-          <div class="stat-value up" id="stat-chg">+0.38%</div>
+        <div class="period-btns">
+          <button class="period-btn active" onclick="setPeriod(30,this)">1M</button>
+          <button class="period-btn" onclick="setPeriod(90,this)">3M</button>
+          <button class="period-btn" onclick="setPeriod(180,this)">6M</button>
         </div>
       </div>
-      <div class="chart-container">
-        <canvas id="mainChart"></canvas>
+      <div class="stat-bar" id="statBar">
+        <div class="stat-item"><div class="stat-label">始値</div><div class="stat-value" id="sOpen">—</div></div>
+        <div class="stat-item"><div class="stat-label">高値</div><div class="stat-value up" id="sHigh">—</div></div>
+        <div class="stat-item"><div class="stat-label">安値</div><div class="stat-value down" id="sLow">—</div></div>
+        <div class="stat-item"><div class="stat-label">現在値</div><div class="stat-value" id="sCurrent">—</div></div>
+        <div class="stat-item"><div class="stat-label">騰落率</div><div class="stat-pct" id="sChg">—</div></div>
       </div>
+      <canvas id="mainChart" height="280"></canvas>
     </div>
 
-    <!-- 1ヶ月評価レビュー -->
-    <div class="review-panel">
-      <div class="review-header">
-        <div class="section-title mb-0">📊 1ヶ月評価レビュー（推奨銘柄）</div>
-        <span class="text-xs text-muted mono">2026/04/01 → 2026/05/01</span>
-      </div>
-      <table class="review-table">
-        <thead>
-          <tr>
-            <th>銘柄</th>
-            <th>前回評価</th>
-            <th>→</th>
-            <th>現在評価</th>
-            <th>先月終値</th>
-            <th>現在値</th>
-            <th>リターン</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <span class="ticker-link" onclick="switchChartByReview('8306','三菱UFJ FG',1580,1520,1620,1490,1565,'jp')">8306</span>
-              <div class="text-xs text-muted">三菱UFJ FG</div>
-            </td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="arrow-icon">→</td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="mono">1,520</td>
-            <td class="mono">1,580</td>
-            <td class="mono up">+3.95%</td>
-          </tr>
-          <tr>
-            <td>
-              <span class="ticker-link" onclick="switchChartByReview('8035','東京エレクトロン',28500,26200,29800,25800,27900,'jp')">8035</span>
-              <div class="text-xs text-muted">東京エレクトロン</div>
-            </td>
-            <td><span class="rating-badge rating-hold">HOLD</span></td>
-            <td class="arrow-icon">→</td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="mono">26,200</td>
-            <td class="mono">28,500</td>
-            <td class="mono up">+8.78%</td>
-          </tr>
-          <tr>
-            <td>
-              <span class="ticker-link" onclick="switchChartByReview('8001','伊藤忠商事',7820,7350,7980,7200,7640,'jp')">8001</span>
-              <div class="text-xs text-muted">伊藤忠商事</div>
-            </td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="arrow-icon">→</td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="mono">7,350</td>
-            <td class="mono">7,820</td>
-            <td class="mono up">+6.39%</td>
-          </tr>
-          <tr>
-            <td>
-              <span class="ticker-link" onclick="switchChartByReview('NVDA','NVIDIA',118,105,125,98,112,'us')">NVDA</span>
-              <div class="text-xs text-muted">NVIDIA</div>
-            </td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="arrow-icon">→</td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="mono">$105.20</td>
-            <td class="mono">$118.40</td>
-            <td class="mono up">+12.55%</td>
-          </tr>
-          <tr>
-            <td>
-              <span class="ticker-link" onclick="switchChartByReview('TSLA','Tesla',252,295,305,245,258,'us')">TSLA</span>
-              <div class="text-xs text-muted">Tesla</div>
-            </td>
-            <td><span class="rating-badge rating-watch">WATCH</span></td>
-            <td class="arrow-icon">→</td>
-            <td><span class="rating-badge rating-hold">HOLD</span></td>
-            <td class="mono">$295.00</td>
-            <td class="mono">$252.30</td>
-            <td class="mono dn">-14.47%</td>
-          </tr>
-          <tr>
-            <td>
-              <span class="ticker-link" onclick="switchChartByReview('9101','日本郵船',4850,4520,5050,4480,4780,'jp')">9101</span>
-              <div class="text-xs text-muted">日本郵船</div>
-            </td>
-            <td><span class="rating-badge rating-hold">HOLD</span></td>
-            <td class="arrow-icon">→</td>
-            <td><span class="rating-badge rating-buy">BUY</span></td>
-            <td class="mono">4,520</td>
-            <td class="mono">4,850</td>
-            <td class="mono up">+7.30%</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- NEWS SECTION -->
-    <div class="news-panel">
-      <div style="padding:12px 16px; border-bottom:1px solid var(--border);">
-        <div class="section-title mb-0">📰 経済・国際ニュース（2026/05/01〜02）</div>
-      </div>
-      <div class="news-item">
-        <div class="news-cat cat-fx">FX</div>
-        <div class="news-body">
-          <div class="news-headline">日銀・財務省が円買い為替介入を断行、ドル円一時155円台へ急伸 介入規模は数兆円か</div>
-          <div class="news-meta">2026/04/30 東京市場｜USD/JPY 4/30介入後 157.21円（前日比 -2.92円）</div>
+    <!-- REVIEW -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">1ヶ月評価レビュー</div>
+      <div class="review-grid">
+        <div class="review-row" data-key="d8306" onclick="switchToStock('d8306',this)">
+          <div><div class="review-name">三菱UFJ FG</div><div class="review-sub">8306 / BANKING</div></div>
+          <div class="review-right"><div class="review-pct up">+4.2%</div><div class="review-note">金利上昇恩恵</div></div>
         </div>
-      </div>
-      <div class="news-item">
-        <div class="news-cat cat-oil">原油</div>
-        <div class="news-body">
-          <div class="news-headline">ホルムズ海峡の緊張継続で原油高止まり、WTI先物は95ドル台を維持 日本のインフレ圧力も再燃懸念</div>
-          <div class="news-meta">2026/05/01 中東情勢｜WTI ¥95.85/bbl  COMEX金 $4,724/oz</div>
+        <div class="review-row" data-key="d8035" onclick="switchToStock('d8035',this)">
+          <div><div class="review-name">東京エレクトロン</div><div class="review-sub">8035 / SEMICON</div></div>
+          <div class="review-right"><div class="review-pct up">+6.8%</div><div class="review-note">AI需要継続</div></div>
         </div>
-      </div>
-      <div class="news-item">
-        <div class="news-cat cat-jp">国内株</div>
-        <div class="news-body">
-          <div class="news-headline">商社株が急騰—伊藤忠・住友商事・三菱商事が好決算を発表、今期も増益・増配予想で市場を驚かす</div>
-          <div class="news-meta">2026/05/01 東証大引け｜日経平均は3日ぶり反発 +228.20円 (59,513.12)</div>
+        <div class="review-row" data-key="d8001" onclick="switchToStock('d8001',this)">
+          <div><div class="review-name">伊藤忠商事</div><div class="review-sub">8001 / TRADING</div></div>
+          <div class="review-right"><div class="review-pct up">+2.1%</div><div class="review-note">資源高支援</div></div>
         </div>
-      </div>
-      <div class="news-item">
-        <div class="news-cat cat-us">米国株</div>
-        <div class="news-body">
-          <div class="news-headline">NYダウが790ドル高と大幅続伸、アルファベット好決算で最高値更新 S&P500も5年5ヶ月ぶりの月間上昇率</div>
-          <div class="news-meta">2026/04/30 NY市場｜ダウ 49,652.14  S&P500 7,219.83（最高値圏）</div>
+        <div class="review-row" data-key="d8750" onclick="switchToStock('d8750',this)">
+          <div><div class="review-name">第一生命HD</div><div class="review-sub">8750 / INSURANCE</div></div>
+          <div class="review-right"><div class="review-pct up">+3.5%</div><div class="review-note">金利上昇メリット</div></div>
         </div>
-      </div>
-      <div class="news-item">
-        <div class="news-cat cat-boj">日銀</div>
-        <div class="news-body">
-          <div class="news-headline">日銀・利上げ姿勢を継続確認、2026年内に政策金利1.0%到達シナリオが市場で織り込み進む</div>
-          <div class="news-meta">2026/05/01 日経CNBC解説｜現在の政策金利：0.75%（2025/12月会合で30年ぶり引き上げ）</div>
+        <div class="review-row" data-key="d6506" onclick="switchToStock('d6506',this)">
+          <div><div class="review-name">安川電機</div><div class="review-sub">6506 / ROBOTICS</div></div>
+          <div class="review-right"><div class="review-pct down">−1.8%</div><div class="review-note">中国需要鈍化</div></div>
         </div>
-      </div>
-      <div class="news-item">
-        <div class="news-cat cat-btc">暗号資産</div>
-        <div class="news-body">
-          <div class="news-headline">ビットコインが中東リスクオフで1,205万円付近に下落、10月高値1,890万円から急落局面が継続</div>
-          <div class="news-meta">2026/05/02 暗号資産市場｜BTC/JPY 約1,205万円 BTC/USD 約$76,600付近</div>
+        <div class="review-row" data-key="d6976" onclick="switchToStock('d6976',this)">
+          <div><div class="review-name">太陽誘電</div><div class="review-sub">6976 / COMPONENTS</div></div>
+          <div class="review-right"><div class="review-pct down">−3.2%</div><div class="review-note">在庫調整長期化</div></div>
+        </div>
+        <div class="review-row" data-key="d5401" onclick="switchToStock('d5401',this)">
+          <div><div class="review-name">日本製鉄</div><div class="review-sub">5401 / STEEL</div></div>
+          <div class="review-right"><div class="review-pct flat">±0.4%</div><div class="review-note">米関税の影響見極め</div></div>
+        </div>
+        <div class="review-row" data-key="d9101" onclick="switchToStock('d9101',this)">
+          <div><div class="review-name">日本郵船</div><div class="review-sub">9101 / SHIPPING</div></div>
+          <div class="review-right"><div class="review-pct up">+5.9%</div><div class="review-note">原油輸送需要増</div></div>
+        </div>
+        <div class="review-row" data-key="d4452" onclick="switchToStock('d4452',this)">
+          <div><div class="review-name">花王</div><div class="review-sub">4452 / CONSUMER</div></div>
+          <div class="review-right"><div class="review-pct down">−0.7%</div><div class="review-note">コスト増圧迫</div></div>
+        </div>
+        <div class="review-row" data-key="d8593" onclick="switchToStock('d8593',this)">
+          <div><div class="review-name">三菱HCキャピタル</div><div class="review-sub">8593 / LEASING</div></div>
+          <div class="review-right"><div class="review-pct up">+1.3%</div><div class="review-note">安定収益評価</div></div>
+        </div>
+        <div class="review-row" data-key="dNVDA" onclick="switchToStock('dNVDA',this)">
+          <div><div class="review-name">NVIDIA</div><div class="review-sub">NVDA / SEMICON</div></div>
+          <div class="review-right"><div class="review-pct up">+9.4%</div><div class="review-note">Blackwell量産</div></div>
+        </div>
+        <div class="review-row" data-key="dMSFT" onclick="switchToStock('dMSFT',this)">
+          <div><div class="review-name">Microsoft</div><div class="review-sub">MSFT / CLOUD</div></div>
+          <div class="review-right"><div class="review-pct up">+4.1%</div><div class="review-note">Azure加速</div></div>
+        </div>
+        <div class="review-row" data-key="dGOOGL" onclick="switchToStock('dGOOGL',this)">
+          <div><div class="review-name">Alphabet</div><div class="review-sub">GOOGL / ADTECH</div></div>
+          <div class="review-right"><div class="review-pct up">+3.7%</div><div class="review-note">広告回復</div></div>
+        </div>
+        <div class="review-row" data-key="dAVGO" onclick="switchToStock('dAVGO',this)">
+          <div><div class="review-name">Broadcom</div><div class="review-sub">AVGO / NETWORK</div></div>
+          <div class="review-right"><div class="review-pct up">+7.2%</div><div class="review-note">AI ASIC好調</div></div>
+        </div>
+        <div class="review-row" data-key="dAAPL" onclick="switchToStock('dAAPL',this)">
+          <div><div class="review-name">Apple</div><div class="review-sub">AAPL / HARDWARE</div></div>
+          <div class="review-right"><div class="review-pct down">−2.3%</div><div class="review-note">iPhone販売鈍化</div></div>
+        </div>
+        <div class="review-row" data-key="dMETA" onclick="switchToStock('dMETA',this)">
+          <div><div class="review-name">Meta Platforms</div><div class="review-sub">META / SOCIAL</div></div>
+          <div class="review-right"><div class="review-pct up">+5.6%</div><div class="review-note">広告AI最適化</div></div>
+        </div>
+        <div class="review-row" data-key="dTSLA" onclick="switchToStock('dTSLA',this)">
+          <div><div class="review-name">Tesla</div><div class="review-sub">TSLA / EV</div></div>
+          <div class="review-right"><div class="review-pct down">−8.1%</div><div class="review-note">販売台数失望</div></div>
+        </div>
+        <div class="review-row" data-key="dTSM" onclick="switchToStock('dTSM',this)">
+          <div><div class="review-name">TSMC</div><div class="review-sub">TSM / FOUNDRY</div></div>
+          <div class="review-right"><div class="review-pct up">+6.3%</div><div class="review-note">先端ノード増産</div></div>
+        </div>
+        <div class="review-row" data-key="dMU" onclick="switchToStock('dMU',this)">
+          <div><div class="review-name">Micron Technology</div><div class="review-sub">MU / MEMORY</div></div>
+          <div class="review-right"><div class="review-pct up">+11.2%</div><div class="review-note">HBM需要急増</div></div>
         </div>
       </div>
     </div>
 
-  </div><!-- /.left-col -->
+    <!-- NEWS -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">マーケットニュース</div>
+      <div class="news-item" style="border-left-color:var(--green)">
+        <span class="news-tag tag-fx">為替介入</span>
+        <div class="news-title">政府・日銀、4月30日に円買い介入断行　5兆円規模か</div>
+        <div class="news-body">4月30日の東京外為市場でドル円が約1ヶ月ぶりに160円台まで下落。政府・日銀が円買い介入を断行し、市場推計で5兆円規模とみられる。5月1日NY市場ではドル円は一時156円34銭まで下落後、157円11銭まで回復して引けた。介入後も構造的な円売り圧力は根強く、効果の持続性に疑問符がついている。</div>
+      </div>
+      <div class="news-item" style="border-left-color:var(--accent)">
+        <span class="news-tag tag-market">マーケット</span>
+        <div class="news-title">5月1日の日経平均は3日ぶり反発　海外勢の「ドル離れ」が支え</div>
+        <div class="news-body">5月1日の東京株式市場で日経平均は3日ぶりに反発。前日の円買い介入により円高が進んだにもかかわらず上昇するという異例の展開となった。米国資産偏重を見直す「ドル離れ」マネーが日本株に流入したとの見方が広がっている。TOTOがストップ高となるなど個別株にも買いが広がった。</div>
+      </div>
+      <div class="news-item" style="border-left-color:var(--yellow)">
+        <span class="news-tag tag-us">米国経済</span>
+        <div class="news-title">S&P500、4月に5年5ヶ月ぶりの月間上昇率を記録</div>
+        <div class="news-body">米S&P500は4月に5年5ヶ月ぶりとなる大幅な月間上昇率を記録。イラン・米国の停戦交渉への期待や、FRBのタカ派姿勢が警戒されつつも底堅い企業業績が支えとなった。米1～3月期GDP（速報）は前期比年率2.0%増と前期（0.5%増）から改善、インフレ指標（PCE）は前年比3.5%と2%目標を依然上回っている。</div>
+      </div>
+      <div class="news-item" style="border-left-color:var(--red)">
+        <span class="news-tag tag-geo">国際情勢</span>
+        <div class="news-title">米国・イスラエルとイランの軍事衝突　停戦交渉は膠着</div>
+        <div class="news-body">米国・イスラエルとイランの軍事衝突をめぐる停戦交渉が膠着する中、米戦争権限法に基づく60日の軍撤収期限が5月1日に到来。イランが新たな提案を提示したとの報道もあるが、トランプ大統領が不満を示し原油市場や株式市場に影響を与えた。ホルムズ海峡封鎖への警戒から原油高が続いており、インフレ圧力の高止まり要因となっている。</div>
+      </div>
+      <div class="news-item" style="border-left-color:var(--purple)">
+        <span class="news-tag tag-crypto">暗号資産</span>
+        <div class="news-title">ビットコイン、中東リスクオフで1200万円付近に下落</div>
+        <div class="news-body">ビットコインは中東情勢の緊張を背景としたリスクオフ局面で下落し、2026年5月現在は円建てで約1,200万円（USD建て約78,000ドル）付近を推移。2025年10月の最高値（円建て約1,900万円、USD建て約12万ドル）から大幅に調整している。来週のFOMCや米雇用統計の結果次第でセンチメントが変化する可能性がある。</div>
+      </div>
+      <div class="market-note"><strong>【週次短評】</strong> 4月30日に政府・日銀が160円台到達を受けて円買い介入を断行（5兆円規模）、ドル円は157円台へ急落したが、構造的な円安圧力（日米金利差・貿易赤字）は根強く効果は限定的との見方が多い。日本株は「ドル離れ」による海外マネー流入で円高にも強い底堅さを示しており、5/1に3日ぶり反発。米国では4月が5年5ヶ月ぶりの月間上昇率を記録したS&P500だが、PCEインフレ3.5%・FRBタカ派シフト・イラン戦争による原油高と、来週の雇用統計・CPI・FRB新議長就任など重大イベントが目白押し。BTC/USDは中東リスクオフで約78,000ドル付近まで調整中。</div>
+    </div>
+  </div>
 
-  <!-- ═══ RIGHT COLUMN ═══ -->
-  <div class="right-col">
-
+  <!-- RIGHT COL -->
+  <div>
     <!-- WATCHLIST -->
-    <div class="watch-panel">
-      <div class="watch-header">
-        <div class="section-title mb-0">👀 注目銘柄ウォッチリスト</div>
-      </div>
+    <div class="card">
+      <div class="card-title">ウォッチリスト</div>
       <div class="tab-group">
-        <button class="tab-btn active" onclick="openTab(event,'tab-jp')">🇯🇵 日本株</button>
-        <button class="tab-btn" onclick="openTab(event,'tab-us')">🇺🇸 米国株</button>
+        <button class="tab-btn active" onclick="switchTab('jp',this)">🇯🇵 日本株</button>
+        <button class="tab-btn" onclick="switchTab('us',this)">🇺🇸 米国株</button>
       </div>
 
-      <!-- JP TAB -->
-      <div id="tab-jp" class="tab-content active">
-        <div class="watch-item" onclick="switchChartByWatch('8306','三菱UFJ FG',1580,1520,1625,1488,1540,'jp')">
-          <div>
-            <div class="watch-sym">8306</div>
-            <div class="watch-name">三菱UFJ フィナンシャルG</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:72%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">1,580<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+3.95%</div>
+      <div class="wl-section active" id="tab-jp">
+        <div class="wl-row" data-key="d8306" onclick="switchToStock('d8306',this)">
+          <div><div class="wl-name">三菱UFJ FG</div><div class="wl-code">8306</div></div>
+          <div class="wl-price">1,842</div><div class="wl-chg up">+4.2%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('8035','東京エレクトロン',28500,26200,29800,25800,27200,'jp')">
-          <div>
-            <div class="watch-sym">8035</div>
-            <div class="watch-name">東京エレクトロン</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:85%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">28,500<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+8.78%</div>
+        <div class="wl-row" data-key="d8035" onclick="switchToStock('d8035',this)">
+          <div><div class="wl-name">東京エレクトロン</div><div class="wl-code">8035</div></div>
+          <div class="wl-price">28,310</div><div class="wl-chg up">+6.8%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('8001','伊藤忠商事',7820,7350,7980,7210,7420,'jp')">
-          <div>
-            <div class="watch-sym">8001</div>
-            <div class="watch-name">伊藤忠商事</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:79%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">7,820<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+6.39%</div>
+        <div class="wl-row" data-key="d8001" onclick="switchToStock('d8001',this)">
+          <div><div class="wl-name">伊藤忠商事</div><div class="wl-code">8001</div></div>
+          <div class="wl-price">7,890</div><div class="wl-chg up">+2.1%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('8750','第一生命HD',3840,3650,3920,3600,3710,'jp')">
-          <div>
-            <div class="watch-sym">8750</div>
-            <div class="watch-name">第一生命ホールディングス</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:65%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">3,840<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+5.21%</div>
+        <div class="wl-row" data-key="d8750" onclick="switchToStock('d8750',this)">
+          <div><div class="wl-name">第一生命HD</div><div class="wl-code">8750</div></div>
+          <div class="wl-price">4,210</div><div class="wl-chg up">+3.5%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('6506','安川電機',4120,4350,4420,4080,4280,'jp')">
-          <div>
-            <div class="watch-sym">6506</div>
-            <div class="watch-name">安川電機</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:40%;background:var(--red)"></div></div>
-          </div>
-          <div class="watch-price">4,120<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg dn">-5.29%</div>
+        <div class="wl-row" data-key="d6506" onclick="switchToStock('d6506',this)">
+          <div><div class="wl-name">安川電機</div><div class="wl-code">6506</div></div>
+          <div class="wl-price">4,655</div><div class="wl-chg down">−1.8%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('5401','日本製鉄',3580,3420,3690,3380,3500,'jp')">
-          <div>
-            <div class="watch-sym">5401</div>
-            <div class="watch-name">日本製鉄</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:60%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">3,580<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+2.29%</div>
+        <div class="wl-row" data-key="d6976" onclick="switchToStock('d6976',this)">
+          <div><div class="wl-name">太陽誘電</div><div class="wl-code">6976</div></div>
+          <div class="wl-price">2,980</div><div class="wl-chg down">−3.2%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('9101','日本郵船',4850,4520,5050,4480,4620,'jp')">
-          <div>
-            <div class="watch-sym">9101</div>
-            <div class="watch-name">日本郵船</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:75%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">4,850<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+7.30%</div>
+        <div class="wl-row" data-key="d5401" onclick="switchToStock('d5401',this)">
+          <div><div class="wl-name">日本製鉄</div><div class="wl-code">5401</div></div>
+          <div class="wl-price">3,102</div><div class="wl-chg flat">+0.4%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('4452','花王',6120,6380,6450,6050,6290,'jp')">
-          <div>
-            <div class="watch-sym">4452</div>
-            <div class="watch-name">花王</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:35%;background:var(--red)"></div></div>
-          </div>
-          <div class="watch-price">6,120<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg dn">-4.08%</div>
+        <div class="wl-row" data-key="d9101" onclick="switchToStock('d9101',this)">
+          <div><div class="wl-name">日本郵船</div><div class="wl-code">9101</div></div>
+          <div class="wl-price">5,870</div><div class="wl-chg up">+5.9%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('6976','太陽誘電',2980,2820,3100,2780,2850,'jp')">
-          <div>
-            <div class="watch-sym">6976</div>
-            <div class="watch-name">太陽誘電</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:55%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">2,980<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+5.67%</div>
+        <div class="wl-row" data-key="d4452" onclick="switchToStock('d4452',this)">
+          <div><div class="wl-name">花王</div><div class="wl-code">4452</div></div>
+          <div class="wl-price">5,340</div><div class="wl-chg down">−0.7%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('8593','三菱HCキャピタル',1180,1120,1210,1105,1150,'jp')">
-          <div>
-            <div class="watch-sym">8593</div>
-            <div class="watch-name">三菱HCキャピタル</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:52%;background:var(--green)"></div></div>
-          </div>
-          <div class="watch-price">1,180<span class="text-xs text-muted">円</span></div>
-          <div class="watch-chg up">+2.61%</div>
+        <div class="wl-row" data-key="d8593" onclick="switchToStock('d8593',this)">
+          <div><div class="wl-name">三菱HCキャピタル</div><div class="wl-code">8593</div></div>
+          <div class="wl-price">1,021</div><div class="wl-chg up">+1.3%</div>
         </div>
       </div>
 
-      <!-- US TAB -->
-      <div id="tab-us" class="tab-content">
-        <div class="watch-item" onclick="switchChartByWatch('NVDA','NVIDIA',118.40,105.20,125.80,98.50,109.00,'us')">
-          <div>
-            <div class="watch-sym us-color">NVDA</div>
-            <div class="watch-name">NVIDIA Corp</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:88%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$118.40</div>
-          <div class="watch-chg up">+12.55%</div>
+      <div class="wl-section" id="tab-us">
+        <div class="wl-row" data-key="dNVDA" onclick="switchToStock('dNVDA',this)">
+          <div><div class="wl-name">NVIDIA</div><div class="wl-code">NVDA</div></div>
+          <div class="wl-price">$1,124</div><div class="wl-chg up">+9.4%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('MSFT','Microsoft',425.60,410.20,430.80,405.10,415.00,'us')">
-          <div>
-            <div class="watch-sym us-color">MSFT</div>
-            <div class="watch-name">Microsoft Corp</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:70%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$425.60</div>
-          <div class="watch-chg up">+3.75%</div>
+        <div class="wl-row" data-key="dMSFT" onclick="switchToStock('dMSFT',this)">
+          <div><div class="wl-name">Microsoft</div><div class="wl-code">MSFT</div></div>
+          <div class="wl-price">$418</div><div class="wl-chg up">+4.1%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('GOOGL','Alphabet',198.80,175.40,202.50,172.10,182.00,'us')">
-          <div>
-            <div class="watch-sym us-color">GOOGL</div>
-            <div class="watch-name">Alphabet Inc (Google)</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:90%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$198.80</div>
-          <div class="watch-chg up">+13.34%</div>
+        <div class="wl-row" data-key="dGOOGL" onclick="switchToStock('dGOOGL',this)">
+          <div><div class="wl-name">Alphabet</div><div class="wl-code">GOOGL</div></div>
+          <div class="wl-price">$178</div><div class="wl-chg up">+3.7%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('AVGO','Broadcom',228.50,210.80,235.00,205.40,215.00,'us')">
-          <div>
-            <div class="watch-sym us-color">AVGO</div>
-            <div class="watch-name">Broadcom Inc</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:75%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$228.50</div>
-          <div class="watch-chg up">+8.39%</div>
+        <div class="wl-row" data-key="dAVGO" onclick="switchToStock('dAVGO',this)">
+          <div><div class="wl-name">Broadcom</div><div class="wl-code">AVGO</div></div>
+          <div class="wl-price">$192</div><div class="wl-chg up">+7.2%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('AAPL','Apple',198.20,195.50,202.30,191.80,196.00,'us')">
-          <div>
-            <div class="watch-sym us-color">AAPL</div>
-            <div class="watch-name">Apple Inc</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:58%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$198.20</div>
-          <div class="watch-chg up">+1.38%</div>
+        <div class="wl-row" data-key="dAAPL" onclick="switchToStock('dAAPL',this)">
+          <div><div class="wl-name">Apple</div><div class="wl-code">AAPL</div></div>
+          <div class="wl-price">$201</div><div class="wl-chg down">−2.3%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('META','Meta',698.40,672.10,715.80,660.00,680.00,'us')">
-          <div>
-            <div class="watch-sym us-color">META</div>
-            <div class="watch-name">Meta Platforms</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:65%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$698.40</div>
-          <div class="watch-chg up">+3.92%</div>
+        <div class="wl-row" data-key="dMETA" onclick="switchToStock('dMETA',this)">
+          <div><div class="wl-name">Meta Platforms</div><div class="wl-code">META</div></div>
+          <div class="wl-price">$532</div><div class="wl-chg up">+5.6%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('TSLA','Tesla',252.30,295.00,305.50,245.80,288.00,'us')">
-          <div>
-            <div class="watch-sym us-color">TSLA</div>
-            <div class="watch-name">Tesla Inc</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:30%;background:var(--red)"></div></div>
-          </div>
-          <div class="watch-price">$252.30</div>
-          <div class="watch-chg dn">-14.47%</div>
+        <div class="wl-row" data-key="dTSLA" onclick="switchToStock('dTSLA',this)">
+          <div><div class="wl-name">Tesla</div><div class="wl-code">TSLA</div></div>
+          <div class="wl-price">$168</div><div class="wl-chg down">−8.1%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('TSM','TSMC',198.50,182.00,205.00,178.00,189.00,'us')">
-          <div>
-            <div class="watch-sym us-color">TSM</div>
-            <div class="watch-name">Taiwan Semiconductor</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:62%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$198.50</div>
-          <div class="watch-chg up">+9.07%</div>
+        <div class="wl-row" data-key="dTSM" onclick="switchToStock('dTSM',this)">
+          <div><div class="wl-name">TSMC</div><div class="wl-code">TSM</div></div>
+          <div class="wl-price">$148</div><div class="wl-chg up">+6.3%</div>
         </div>
-        <div class="watch-item" onclick="switchChartByWatch('MU','Micron',108.40,95.50,115.80,92.00,100.00,'us')">
-          <div>
-            <div class="watch-sym us-color">MU</div>
-            <div class="watch-name">Micron Technology</div>
-            <div class="micro-bar"><div class="micro-bar-fill" style="width:78%;background:var(--cyan)"></div></div>
-          </div>
-          <div class="watch-price">$108.40</div>
-          <div class="watch-chg up">+13.51%</div>
+        <div class="wl-row" data-key="dMU" onclick="switchToStock('dMU',this)">
+          <div><div class="wl-name">Micron Technology</div><div class="wl-code">MU</div></div>
+          <div class="wl-price">$92</div><div class="wl-chg up">+11.2%</div>
         </div>
       </div>
     </div>
 
-    <!-- ETF SECTION -->
-    <div class="etf-panel">
-      <div style="padding:10px 16px 0; border-bottom:1px solid var(--border); padding-bottom:10px;">
-        <div class="section-title mb-0">📦 注目ETF・投資信託</div>
+    <!-- ETF -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">ETF</div>
+      <div class="etf-row" data-key="d1306" onclick="switchToStock('d1306',this)">
+        <div><div class="etf-name">TOPIX連動型ETF</div><div class="etf-code">1306</div></div>
+        <div class="etf-right"><div class="etf-price">2,841</div><div class="etf-chg up">+3.1%</div></div>
       </div>
-      <div class="etf-item" onclick="switchChartByWatch('1306','TOPIX ETF',2580,2430,2640,2400,2480,'jp')">
-        <div class="etf-left">
-          <div class="etf-sym">1306</div>
-          <div class="etf-name">TOPIX連動型ETF（野村）</div>
-        </div>
-        <div class="etf-right">
-          <div class="etf-price">2,580<span class="text-xs text-muted"> 円</span></div>
-          <div class="etf-chg up">+1.25%</div>
-        </div>
+      <div class="etf-row" data-key="d1326" onclick="switchToStock('d1326',this)">
+        <div><div class="etf-name">SPDRゴールドシェア</div><div class="etf-code">1326</div></div>
+        <div class="etf-right"><div class="etf-price">34,820</div><div class="etf-chg up">+2.8%</div></div>
       </div>
-      <div class="etf-item" onclick="switchChartByWatch('1326','SPDR ゴールド',37200,35800,38100,35200,36500,'jp')">
-        <div class="etf-left">
-          <div class="etf-sym">1326</div>
-          <div class="etf-name">SPDRゴールド（円建）</div>
-        </div>
-        <div class="etf-right">
-          <div class="etf-price">37,200<span class="text-xs text-muted"> 円</span></div>
-          <div class="etf-chg up">+3.91%</div>
-        </div>
+      <div class="etf-row" data-key="dQQQ" onclick="switchToStock('dQQQ',this)">
+        <div><div class="etf-name">Invesco QQQ</div><div class="etf-code">QQQ</div></div>
+        <div class="etf-right"><div class="etf-price">$462</div><div class="etf-chg up">+5.2%</div></div>
       </div>
-      <div class="etf-item" onclick="switchChartByWatch('QQQ','Invesco QQQ',502.40,480.00,510.00,472.00,488.00,'us')">
-        <div class="etf-left">
-          <div class="etf-sym us-color">QQQ</div>
-          <div class="etf-name">Invesco QQQ Trust (NASDAQ100)</div>
-        </div>
-        <div class="etf-right">
-          <div class="etf-price">$502.40</div>
-          <div class="etf-chg up">+4.67%</div>
-        </div>
+      <div class="etf-row" data-key="dVOO" onclick="switchToStock('dVOO',this)">
+        <div><div class="etf-name">Vanguard S&P500</div><div class="etf-code">VOO</div></div>
+        <div class="etf-right"><div class="etf-price">$518</div><div class="etf-chg up">+3.8%</div></div>
       </div>
-      <div class="etf-item" onclick="switchChartByWatch('VOO','Vanguard S&P500',662.80,635.00,672.00,628.00,645.00,'us')">
-        <div class="etf-left">
-          <div class="etf-sym us-color">VOO</div>
-          <div class="etf-name">Vanguard S&P 500 ETF</div>
-        </div>
-        <div class="etf-right">
-          <div class="etf-price">$662.80</div>
-          <div class="etf-chg up">+2.76%</div>
-        </div>
-      </div>
-      <div class="etf-item" onclick="switchChartByWatch('eMAXIS','eMAXIS Slim 全世界株',25800,24200,26400,23800,24800,'jp')">
-        <div class="etf-left">
-          <div class="etf-sym">eMAXIS</div>
-          <div class="etf-name">eMAXIS Slim 全世界株（オルカン）</div>
-        </div>
-        <div class="etf-right">
-          <div class="etf-price">25,800<span class="text-xs text-muted"> 円</span></div>
-          <div class="etf-chg up">+4.03%</div>
-        </div>
+      <div class="etf-row" data-key="dOLCAN" onclick="switchToStock('dOLCAN',this)">
+        <div><div class="etf-name">原油ETF WTI</div><div class="etf-code">OIL-CAN</div></div>
+        <div class="etf-right"><div class="etf-price">$89.4</div><div class="etf-chg up">+1.9%</div></div>
       </div>
     </div>
 
     <!-- SECTOR -->
-    <div class="sector-panel">
-      <div class="section-title">📈 注目セクター（日米統合）</div>
-      <div class="sector-grid">
-        <div class="sector-item">
-          <span class="sector-name">🇯🇵 金融・銀行</span>
-          <span class="sector-chg up">+4.12%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇯🇵 商社・総合</span>
-          <span class="sector-chg up">+6.18%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇺🇸 AI・半導体</span>
-          <span class="sector-chg up">+9.84%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇺🇸 クラウド</span>
-          <span class="sector-chg up">+5.37%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇯🇵 海運・物流</span>
-          <span class="sector-chg up">+7.11%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇺🇸 エネルギー</span>
-          <span class="sector-chg up">+3.28%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇯🇵 精密機器</span>
-          <span class="sector-chg dn">-3.47%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇺🇸 EV・自動車</span>
-          <span class="sector-chg dn">-8.92%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🇯🇵 日用品</span>
-          <span class="sector-chg dn">-2.85%</span>
-        </div>
-        <div class="sector-item">
-          <span class="sector-name">🌐 金・コモディティ</span>
-          <span class="sector-chg up">+4.50%</span>
-        </div>
-      </div>
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">セクター騰落率（1M）</div>
+      <div id="sectorBars"></div>
     </div>
 
     <!-- EVENTS -->
-    <div class="events-panel">
-      <div class="section-title">🗓 来週の重要経済イベント（05/04〜08）</div>
-      <div class="event-item">
-        <div class="event-date">05/05<br><span style="color:var(--text-muted);font-size:9px">火</span></div>
-        <div class="event-body">
-          <div class="event-title">🇯🇵 日銀・植田総裁 議会証言<span class="event-imp imp-high"></span></div>
-          <div class="event-region">BOJ 追加利上げ時期の示唆に注目</div>
-        </div>
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">今後の注目イベント</div>
+      <div class="event-row">
+        <div class="event-date">5/7 (木)</div>
+        <div class="event-body"><div class="event-name"><span class="imp-high"></span>米ADP雇用・JOLTS</div><div class="event-desc">米労働市場の先行指標。8日（金）雇用統計の前哨戦。</div></div>
       </div>
-      <div class="event-item">
-        <div class="event-date">05/06<br><span style="color:var(--text-muted);font-size:9px">水</span></div>
-        <div class="event-body">
-          <div class="event-title">🇺🇸 FOMC政策金利発表・パウエル議長会見<span class="event-imp imp-high"></span></div>
-          <div class="event-region">FED 現行金利3.50-3.75%  据え置き予想、後任人事も焦点</div>
-        </div>
+      <div class="event-row">
+        <div class="event-date">5/8 (金)</div>
+        <div class="event-body"><div class="event-name"><span class="imp-high"></span>米4月雇用統計</div><div class="event-desc">非農業部門雇用者数・失業率。3月は+17.8万人と予想超過。FRB政策に直結。</div></div>
       </div>
-      <div class="event-item">
-        <div class="event-date">05/06<br><span style="color:var(--text-muted);font-size:9px">水</span></div>
-        <div class="event-body">
-          <div class="event-title">🇺🇸 米ISM非製造業景況指数 (4月)<span class="event-imp imp-mid"></span></div>
-          <div class="event-region">予想: 52.8  前回: 53.5</div>
-        </div>
+      <div class="event-row">
+        <div class="event-date">5/12 (月)</div>
+        <div class="event-body"><div class="event-name"><span class="imp-high"></span>米4月CPI</div><div class="event-desc">PCEと並ぶインフレ指標。FRBの利下げ時期を左右。</div></div>
       </div>
-      <div class="event-item">
-        <div class="event-date">05/07<br><span style="color:var(--text-muted);font-size:9px">木</span></div>
-        <div class="event-body">
-          <div class="event-title">🇬🇧 英国中央銀行（BOE）政策金利発表<span class="event-imp imp-mid"></span></div>
-          <div class="event-region">BOE  早期利上げ観測が後退</div>
-        </div>
+      <div class="event-row">
+        <div class="event-date">5/14-15</div>
+        <div class="event-body"><div class="event-name"><span class="imp-high"></span>米中首脳会談（北京）</div><div class="event-desc">トランプ大統領訪中。貿易交渉・台湾問題が焦点。市場への影響大。</div></div>
       </div>
-      <div class="event-item">
-        <div class="event-date">05/07<br><span style="color:var(--text-muted);font-size:9px">木</span></div>
-        <div class="event-body">
-          <div class="event-title">🇺🇸 米ADP民間雇用者数 (4月)<span class="event-imp imp-mid"></span></div>
-          <div class="event-region">予想: +15.2万人  雇用情勢の先行指標</div>
-        </div>
-      </div>
-      <div class="event-item">
-        <div class="event-date">05/08<br><span style="color:var(--text-muted);font-size:9px">金</span></div>
-        <div class="event-body">
-          <div class="event-title">🇺🇸 米雇用統計・非農業部門雇用者数 (4月)<span class="event-imp imp-high"></span></div>
-          <div class="event-region">予想: +16.0万人  失業率予想: 4.5%　FRB政策に直結</div>
-        </div>
-      </div>
-      <div class="event-item">
-        <div class="event-date">05/08<br><span style="color:var(--text-muted);font-size:9px">金</span></div>
-        <div class="event-body">
-          <div class="event-title">🇯🇵 国内主要企業 本決算発表ピーク<span class="event-imp imp-mid"></span></div>
-          <div class="event-region">東証 三菱商事・日立・ソニー等 通期見通しに注目</div>
-        </div>
+      <div class="event-row">
+        <div class="event-date">5/15 (金)</div>
+        <div class="event-body"><div class="event-name"><span class="imp-high"></span>パウエルFRB議長任期満了</div><div class="event-desc">後任ウォーシュ新議長就任。利下げ・バランスシート縮小姿勢の変化に注目。</div></div>
       </div>
     </div>
-
-  </div><!-- /.right-col -->
-
-</div><!-- /.main-layout -->
-
-<!-- ─── FOOTER ─── -->
-<footer>
-  <div>© 2026 FinSight Pro Terminal — 情報提供目的のみ / For informational purposes only</div>
-  <div style="display:flex;gap:16px;align-items:center;">
-    <span>DATA: web_search (2026/05/01-02)</span>
-    <span style="color:var(--border)">|</span>
-    <span>Chart.js 4.4.1</span>
-    <span style="color:var(--border)">|</span>
-    <span style="color:var(--red)">⚠ 投資勧誘ではありません</span>
   </div>
-</footer>
+</div>
 
 <script>
-// ─── CLOCK ───
-function updateClock() {
-  const now = new Date();
-  const jst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-  const h = String(jst.getHours()).padStart(2,'0');
-  const m = String(jst.getMinutes()).padStart(2,'0');
-  const s = String(jst.getSeconds()).padStart(2,'0');
-  document.getElementById('clock').textContent = `JST ${h}:${m}:${s}`;
+// ─── CLOCK ───────────────────────────────────────────────
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    n.toLocaleTimeString('ja-JP',{hour12:false});
 }
-setInterval(updateClock, 1000);
-updateClock();
+setInterval(tick,1000);tick();
 
-// ─── RANDOM WALK GENERATOR ───
-function genWalk(start, end, vol, seed, n = 180) {
-  const data = [];
-  let v = seed;
-  function rand() {
-    v = (v * 1664525 + 1013904223) & 0xffffffff;
-    return ((v >>> 0) / 0xffffffff) - 0.5;
+// ─── SEEDED RANDOM WALK ──────────────────────────────────
+function genWalk(start,end,vol,seed,n=180){
+  let s=seed>>>0;
+  function rand(){s=(s^(s<<13))>>>0;s=(s^(s>>>17))>>>0;s=(s^(s<<5))>>>0;return s/0xFFFFFFFF}
+  const arr=[start];
+  for(let i=1;i<n;i++){
+    const g=(()=>{let u=0,v=0;while(u===0)u=rand();while(v===0)v=rand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)})();
+    arr.push(arr[i-1]*(1+vol*g/Math.sqrt(252)));
   }
-  data.push(start);
-  for (let i = 1; i < n; i++) {
-    const prev = data[i - 1];
-    const trend = (end - prev) / (n - i) * 0.35;
-    const noise = prev * vol * rand();
-    data.push(prev + trend + noise);
-  }
-  data.push(end);
-  return data;
+  // drift toward end
+  const drift=Math.pow(end/arr[n-1],1/n);
+  for(let i=1;i<n;i++) arr[i]*=Math.pow(drift,i);
+  return arr.map(v=>Math.round(v*100)/100);
 }
 
-// ─── CHART STATE ───
-let currentSym = 'NK225';
-let currentPeriod = 1;
-let chartData = {
-  sym: 'NK225', name: '日経平均株価',
-  price: 59513.12, prev: 59284.92,
-  high: 59890.10, low: 58920.40, open: 59380.50,
-  type: 'jp'
+// ─── DATA ────────────────────────────────────────────────
+const DATA={
+  nikkei:{name:'日経平均先物',sub:'NIKKEI FUTURES / CME',color:'#3b8eea',
+    prices:genWalk(54200,59430,0.014,1001),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  dow:{name:'NYダウ',sub:'DJIA / NYSE',color:'#22d3ee',
+    prices:genWalk(47800,49678,0.01,1002),fmt:v=>v.toLocaleString('en-US',{maximumFractionDigits:0})},
+  sp500:{name:'S&P 500',sub:'S&P500 / NYSE',color:'#34d399',
+    prices:genWalk(5200,5560,0.012,1003),fmt:v=>v.toLocaleString('en-US',{maximumFractionDigits:0})},
+  forex:{name:'USD/JPY',sub:'FX SPOT',color:'#fb923c',
+    prices:genWalk(150.5,157.03,0.007,1004),fmt:v=>v.toFixed(2)},
+  btc:{name:'BTC/JPY',sub:'BITCOIN YEN',color:'#fbbf24',
+    prices:genWalk(17800000,12000000,0.03,1005),fmt:v=>'¥'+Math.round(v).toLocaleString('ja-JP')},
+  d8306:{name:'三菱UFJ FG',sub:'8306 / BANKING',color:'#3b8eea',
+    prices:genWalk(1768,1842,0.016,2001),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d8035:{name:'東京エレクトロン',sub:'8035 / SEMICON',color:'#22d3ee',
+    prices:genWalk(26510,28310,0.022,2002),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d8001:{name:'伊藤忠商事',sub:'8001 / TRADING',color:'#34d399',
+    prices:genWalk(7730,7890,0.014,2003),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d8750:{name:'第一生命HD',sub:'8750 / INSURANCE',color:'#a78bfa',
+    prices:genWalk(4068,4210,0.015,2004),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d6506:{name:'安川電機',sub:'6506 / ROBOTICS',color:'#f87171',
+    prices:genWalk(4740,4655,0.018,2005),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d6976:{name:'太陽誘電',sub:'6976 / COMPONENTS',color:'#fb923c',
+    prices:genWalk(3079,2980,0.02,2006),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d5401:{name:'日本製鉄',sub:'5401 / STEEL',color:'#7a96b0',
+    prices:genWalk(3089,3102,0.015,2007),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d9101:{name:'日本郵船',sub:'9101 / SHIPPING',color:'#22d3ee',
+    prices:genWalk(5543,5870,0.022,2008),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d4452:{name:'花王',sub:'4452 / CONSUMER',color:'#fb923c',
+    prices:genWalk(5378,5340,0.012,2009),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d8593:{name:'三菱HCキャピタル',sub:'8593 / LEASING',color:'#34d399',
+    prices:genWalk(1008,1021,0.012,2010),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  dNVDA:{name:'NVIDIA',sub:'NVDA / SEMICON',color:'#34d399',
+    prices:genWalk(1026,1124,0.028,3001),fmt:v=>'$'+v.toFixed(2)},
+  dMSFT:{name:'Microsoft',sub:'MSFT / CLOUD',color:'#3b8eea',
+    prices:genWalk(401,418,0.015,3002),fmt:v=>'$'+v.toFixed(2)},
+  dGOOGL:{name:'Alphabet',sub:'GOOGL / ADTECH',color:'#22d3ee',
+    prices:genWalk(172,178,0.016,3003),fmt:v=>'$'+v.toFixed(2)},
+  dAVGO:{name:'Broadcom',sub:'AVGO / NETWORK',color:'#a78bfa',
+    prices:genWalk(179,192,0.02,3004),fmt:v=>'$'+v.toFixed(2)},
+  dAAPL:{name:'Apple',sub:'AAPL / HARDWARE',color:'#f87171',
+    prices:genWalk(206,201,0.014,3005),fmt:v=>'$'+v.toFixed(2)},
+  dMETA:{name:'Meta Platforms',sub:'META / SOCIAL',color:'#fbbf24',
+    prices:genWalk(504,532,0.02,3006),fmt:v=>'$'+v.toFixed(2)},
+  dTSLA:{name:'Tesla',sub:'TSLA / EV',color:'#f87171',
+    prices:genWalk(183,168,0.03,3007),fmt:v=>'$'+v.toFixed(2)},
+  dTSM:{name:'TSMC',sub:'TSM / FOUNDRY',color:'#22d3ee',
+    prices:genWalk(139,148,0.018,3008),fmt:v=>'$'+v.toFixed(2)},
+  dMU:{name:'Micron Technology',sub:'MU / MEMORY',color:'#34d399',
+    prices:genWalk(82.7,92,0.025,3009),fmt:v=>'$'+v.toFixed(2)},
+  d1306:{name:'TOPIX連動型ETF',sub:'1306 / ETF',color:'#3b8eea',
+    prices:genWalk(2755,2841,0.013,4001),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  d1326:{name:'SPDRゴールドシェア',sub:'1326 / ETF',color:'#fbbf24',
+    prices:genWalk(33870,34820,0.01,4002),fmt:v=>v.toLocaleString('ja-JP',{maximumFractionDigits:0})},
+  dQQQ:{name:'Invesco QQQ',sub:'QQQ / ETF',color:'#22d3ee',
+    prices:genWalk(439,462,0.018,4003),fmt:v=>'$'+v.toFixed(2)},
+  dVOO:{name:'Vanguard S&P500',sub:'VOO / ETF',color:'#34d399',
+    prices:genWalk(499,518,0.013,4004),fmt:v=>'$'+v.toFixed(2)},
+  dOLCAN:{name:'原油ETF WTI',sub:'OIL-CAN / COMMODITY',color:'#fb923c',
+    prices:genWalk(87.5,89.4,0.018,4005),fmt:v=>'$'+v.toFixed(2)},
 };
-let mainChart = null;
 
-function getColorByType(type) {
-  switch(type) {
-    case 'us': return '#22d3ee';
-    case 'btc': return '#fb923c';
-    case 'fx': return '#fbbf24';
-    default: return '#3b8eea';
+// ─── CHART STATE ─────────────────────────────────────────
+let currentKey='nikkei';
+let currentPeriod=30;
+let mainChart=null;
+
+function getLabels(n){
+  const labels=[];
+  const now=new Date(2026,4,2);
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(now);
+    d.setDate(d.getDate()-i);
+    labels.push(`${d.getMonth()+1}/${d.getDate()}`);
   }
+  return labels;
 }
 
-function buildChartData(data, months) {
-  const today = new Date(2026, 4, 1); // May 1 2026
-  const days = months * 30;
-  const start = new Date(today);
-  start.setDate(start.getDate() - days);
-  const labels = [];
-  const pts = data;
-  const step = days / (pts.length - 1);
-  for (let i = 0; i < pts.length; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + Math.round(i * step));
-    labels.push(d.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }));
-  }
-  return { labels, data: pts };
-}
+function buildChart(key,period){
+  const stock=DATA[key]||DATA['nikkei'];
+  const prices=stock.prices.slice(-period);
+  const labels=getLabels(period);
+  const color=stock.color||'#3b8eea';
+  const open=prices[0],close=prices[prices.length-1];
+  const high=Math.max(...prices),low=Math.min(...prices);
+  const pct=((close-open)/open*100);
+  const fmt=stock.fmt||(v=>v.toString());
 
-function renderChart(cd, months) {
-  const vol = cd.type === 'btc' ? 0.04 : cd.type === 'fx' ? 0.008 : 0.018;
-  const n = months === 1 ? 30 : months === 3 ? 90 : 180;
-  const rawData = genWalk(cd.prev * (months === 1 ? 0.97 : months === 3 ? 0.93 : 0.88),
-                          cd.price, vol, cd.sym.charCodeAt(0) * 37 + months * 13, n);
-  const { labels, data } = buildChartData(rawData, months);
-  const color = getColorByType(cd.type);
-  const ctx = document.getElementById('mainChart').getContext('2d');
+  document.getElementById('chartTitle').textContent=stock.name;
+  document.getElementById('chartSub').textContent=stock.sub;
+  document.getElementById('sOpen').textContent=fmt(open);
+  document.getElementById('sHigh').textContent=fmt(high);
+  document.getElementById('sLow').textContent=fmt(low);
+  document.getElementById('sCurrent').textContent=fmt(close);
+  const sChgEl=document.getElementById('sChg');
+  sChgEl.textContent=(pct>=0?'+':'')+pct.toFixed(2)+'%';
+  sChgEl.className='stat-pct '+(pct>0?'up':pct<0?'down':'flat');
 
-  if (mainChart) mainChart.destroy();
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  if(mainChart) mainChart.destroy();
 
-  const grad = ctx.createLinearGradient(0, 0, 0, 220);
-  grad.addColorStop(0, color + '28');
-  grad.addColorStop(1, color + '04');
+  const grad=ctx.createLinearGradient(0,0,0,260);
+  grad.addColorStop(0,color+'44');
+  grad.addColorStop(1,color+'00');
 
-  mainChart = new Chart(ctx, {
-    type: 'line',
-    data: {
+  mainChart=new Chart(ctx,{
+    type:'line',
+    data:{
       labels,
-      datasets: [{
-        data,
-        borderColor: color,
-        borderWidth: 1.8,
-        fill: true,
-        backgroundColor: grad,
-        pointRadius: 0,
-        pointHitRadius: 8,
-        tension: 0.35
+      datasets:[{
+        data:prices,
+        borderColor:color,
+        backgroundColor:grad,
+        borderWidth:1.8,
+        pointRadius:0,
+        pointHoverRadius:4,
+        pointHoverBackgroundColor:color,
+        fill:true,
+        tension:0.3
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          backgroundColor: '#131e2b',
-          borderColor: '#1e2f45',
-          borderWidth: 1,
-          titleColor: '#94a3b8',
-          bodyColor: color,
-          bodyFont: { family: 'DM Mono', size: 12 },
-          callbacks: {
-            label: ctx => {
-              const v = ctx.raw;
-              if (cd.price > 1000000) return `  ${(v/10000).toFixed(0)}万円`;
-              if (cd.price > 1000) return `  ${v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-              return `  ${v.toFixed(2)}`;
-            }
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0f1923',
+          borderColor:'#1e2d3d',
+          borderWidth:1,
+          titleColor:'#7a96b0',
+          bodyColor:'#e8f0f8',
+          titleFont:{family:'DM Mono',size:10},
+          bodyFont:{family:'DM Mono',size:12},
+          callbacks:{
+            label:ctx=>' '+fmt(ctx.parsed.y)
           }
         }
       },
-      scales: {
-        x: {
-          grid: { color: '#1e2f4520', drawBorder: false },
-          ticks: {
-            color: '#64748b',
-            font: { family: 'DM Mono', size: 9 },
-            maxTicksLimit: 8,
-            maxRotation: 0
-          },
-          border: { display: false }
+      scales:{
+        x:{
+          grid:{color:'#1e2d3d',drawTicks:false},
+          ticks:{color:'#7a96b0',font:{family:'DM Mono',size:9},maxTicksLimit:8,maxRotation:0}
         },
-        y: {
-          position: 'right',
-          grid: { color: '#1e2f4530', drawBorder: false },
-          ticks: {
-            color: '#64748b',
-            font: { family: 'DM Mono', size: 9 },
-            callback: v => {
-              if (v > 1000000) return (v/10000).toFixed(0)+'万';
-              if (v > 999) return v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-              return v.toFixed(2);
-            }
-          },
-          border: { display: false }
+        y:{
+          position:'right',
+          grid:{color:'#1e2d3d'},
+          ticks:{color:'#7a96b0',font:{family:'DM Mono',size:9},callback:v=>fmt(v)}
         }
-      },
-      interaction: { mode: 'index', intersect: false }
+      }
     }
   });
 }
 
-function updateStats(cd) {
-  const fmt = (v) => {
-    if (v > 1000000) return (v/10000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '万';
-    if (v > 999) return v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return v.toFixed(2);
-  };
-  const chg = ((cd.price - cd.prev) / cd.prev * 100);
-  document.getElementById('chart-sym').textContent = cd.sym;
-  document.getElementById('chart-fullname').textContent = cd.name;
-  document.getElementById('stat-open').textContent = fmt(cd.open);
-  document.getElementById('stat-high').textContent = fmt(cd.high);
-  document.getElementById('stat-low').textContent = fmt(cd.low);
-  document.getElementById('stat-cur').textContent = fmt(cd.price);
-  const chgEl = document.getElementById('stat-chg');
-  chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
-  chgEl.className = 'stat-value ' + (chg >= 0 ? 'up' : 'dn');
+function switchToStock(key,el){
+  const stock=DATA[key];
+  if(!stock){
+    // fallback
+    console.warn('No data for key:',key,'. Falling back to nikkei.');
+    switchToStock('nikkei',null);
+    return;
+  }
+  currentKey=key;
+
+  // update active ticker card
+  if(el){
+    document.querySelectorAll('.ticker-card').forEach(c=>c.classList.remove('active'));
+    // find ticker card with same key
+    const tc=document.querySelector('.ticker-card[data-key="'+key+'"]');
+    if(tc) tc.classList.add('active');
+  }
+
+  buildChart(key,currentPeriod);
 }
 
-function switchChart(el, sym, name, price, prev, high, low, open, type) {
-  document.querySelectorAll('.ticker-card').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  chartData = { sym, name, price, prev, high, low, open, type };
-  currentSym = sym;
-  updateStats(chartData);
-  renderChart(chartData, currentPeriod);
+function setPeriod(p,btn){
+  currentPeriod=p;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildChart(currentKey,p);
 }
 
-function switchChartByReview(sym, name, price, prev, high, low, open, type) {
-  chartData = { sym, name, price, prev, high, low, open, type };
-  currentSym = sym;
-  document.querySelectorAll('.ticker-card').forEach(c => c.classList.remove('active'));
-  updateStats(chartData);
-  renderChart(chartData, currentPeriod);
-}
-
-function switchChartByWatch(sym, name, price, prev, high, low, open, type) {
-  chartData = { sym, name, price, prev, high, low, open, type };
-  currentSym = sym;
-  document.querySelectorAll('.ticker-card').forEach(c => c.classList.remove('active'));
-  updateStats(chartData);
-  renderChart(chartData, currentPeriod);
-}
-
-function setPeriod(months, label) {
-  currentPeriod = months;
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  renderChart(chartData, months);
-}
-
-// ─── TABS ───
-function openTab(evt, tabId) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  evt.currentTarget.classList.add('active');
-}
-
-// ─── INIT ───
-window.addEventListener('load', () => {
-  renderChart(chartData, 1);
-});
-</script>
-</body>
-</html>
+function switchTab(
