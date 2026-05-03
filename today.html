@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Financial Dashboard — 2026年05月02日</title>
+<title>Financial Dashboard — 2026年05月03日</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -119,8 +119,8 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
 <header>
   <div>
     <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px"><span class="live"></span>FINANCIAL DASHBOARD</div>
-    <div class="date-main">2026年05月02日</div>
-    <div class="date-sub">土曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
+    <div class="date-main">2026年05月03日</div>
+    <div class="date-sub">日曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
   </div>
   <div><div class="clock" id="clk">--:--:--</div><div class="tz">JST · UTC+9</div></div>
 </header>
@@ -128,10 +128,10 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
 <div class="tr">
   <div class="tc" onclick="si('nikkei')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">日経平均</div><div class="badge b-up">+0.38%</div></div><div class="tc-v">59513</div><div class="tc-s up">▲ +228 pts</div><div class="tc-m"><canvas id="m1"></canvas></div></div>
-  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge b-dn">-0.31%</div></div><div class="tc-v">49499</div><div class="tc-s dn">▼ -153 pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
-  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge b-up">+0.87%</div></div><div class="tc-v">7272</div><div class="tc-s up">▲ +63 pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
-  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge b-dn">4/30介入後の円高水準、再介入警戒</div></div><div class="tc-v">157.10</div><div class="tc-s dn">▼ -2.90</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
-  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge b-dn">-</div></div><div class="tc-v tc-vs">¥12,000,000</div><div class="tc-s dn">▼ リスクオフ</div><div class="tc-s2">≈ $76400 · @¥157.10</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
+  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge b-up">+1.62%</div></div><div class="tc-v">49652</div><div class="tc-s up">▲ +790 pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
+  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge b-up">+1.02%</div></div><div class="tc-v">7204</div><div class="tc-s up">▲ +73 pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
+  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge b-dn">政府・日銀介入実施、介入警戒継続</div></div><div class="tc-v">157.10</div><div class="tc-s dn">▼ -2.43</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
+  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge b-dn">-1.50%</div></div><div class="tc-v tc-vs">¥12,000,000</div><div class="tc-s dn">▼ リスクオフ</div><div class="tc-s2">≈ $76400 · @¥157.10</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
 </div>
  
 <div class="grid">
@@ -148,9 +148,9 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
       <div class="st"><div class="sl">期間騰落率</div><div class="sv" id="sCh">—</div></div>
     </div>
     <div class="cr">
-      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">184.04</div><div class="cc2 dn">▼ 介入の余波</div></div>
-      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$101.94</div><div class="cc2 up">▲ 中東緊張</div></div>
-      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$4644</div><div class="cc2 up">▲ 安全資産</div></div>
+      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">169.70</div><div class="cc2 dn">▼ 介入の余波</div></div>
+      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$101.00</div><div class="cc2 up">▲ 中東緊張</div></div>
+      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$4600</div><div class="cc2 up">▲ 安全資産</div></div>
     </div>
   </div>
  
@@ -184,11 +184,11 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
   <div class="card">
     <div class="lbl">📰 経済・国際ニュース</div>
-    <div class="nl"><div class="ni"><div class="nt">為替</div><div class="nb"><strong>政府・日銀が4/30に円買い介入、5兆円規模か</strong> — 4月30日に円が一時160円台に下落したのを受け政府・日銀が円買い介入を実施。市場では介入規模が5兆円規模と推計。5月1日のNY市場では1ドル=157円台前半で推移し、再介入警戒が続く。</div></div>
-<div class="ni"><div class="nt">マーケット</div><div class="nb"><strong>日経平均5/1は228円高の59513円、連休前に底堅い展開</strong> — 5月1日の東京株式市場で日経平均は前日比228円（+0.38%）高の59,513円で終了。TOTOがストップ高、住友商事や商社株が高く、円高メリット銘柄にも買いが入った。</div></div>
-<div class="ni"><div class="nt">米国経済</div><div class="nb"><strong>米S&P500が連日最高値更新、アップル好決算が後押し</strong> — 5月1日の米市場でS&P500は続伸し連日の最高値更新。アップルが市場予想を上回る増収増益決算を発表し3%高。一方ダウは153ドル安と反落。シェブロンの減益決算が重しとなった。</div></div>
-<div class="ni"><div class="nt">国際情勢</div><div class="nb"><strong>イランが新提案提示、中東情勢に和平期待と原油続落</strong> — イランが4月30日にパキスタン経由で米国に新たな和平案を提示。これを受け原油相場が下落し、WTIは前日比3%安の1バレル101.94ドルで終了。ただしトランプ大統領は最終合意への不満も示しており予断を許さない。</div></div>
-<div class="ni"><div class="nt">暗号資産</div><div class="nb"><strong>ビットコイン、中東リスクオフで1200万円台に下落</strong> — 中東情勢の緊張継続とリスクオフの流れを受け、ビットコインは円建てで約1,200万円付近まで下落。米ドル建てでは約76,000ドル台で推移しており、安全資産への資金逃避が続いている。</div></div></div>
+    <div class="nl"><div class="ni"><div class="nt">為替</div><div class="nb"><strong>政府・日銀が円買い介入を実施、ドル円155円台へ急落</strong> — 4月30日、ドル円が一時160.73円と年初来高値を更新したのち、政府・日銀が円買い・ドル売り介入を実施。一時155.57円まで急落した。財務省幹部は「最後の退避勧告」と強い口調で円安を牽制。その後も157円台での取引が続き、追加介入への警戒が続いている。</div></div>
+<div class="ni"><div class="nt">マーケット</div><div class="nb"><strong>日経平均3日ぶり反発、東京エレクトロン好決算が指数を307円押し上げ</strong> — 5月1日の日経平均は前日比+228.20円（+0.38%）の59,513.12円で終了。東京エレクトロンが好決算を受けて大幅高となり、1社だけで日経平均を307円押し上げた。住友商事・伊藤忠・三菱商事など大手商社も好決算で後場急騰し市場を牽引した。</div></div>
+<div class="ni"><div class="nt">米国経済</div><div class="nb"><strong>ダウ790ドル高・S&P500最高値更新、Apple好決算とイラン和平期待が追い風</strong> — 4月30日のNY株式市場はダウが+790ドル高と大幅上昇。Appleが堅調な業績見通しを示しテック株が上昇を主導。イランが米国の修正和平案に回答したとの報道も買いを後押しし、S&P500は5週連続上昇と2024年以来最長の連続高を記録した。</div></div>
+<div class="ni"><div class="nt">国際情勢</div><div class="nb"><strong>米・イラン和平交渉が進展、原油一時102ドルまで下落</strong> — パキスタン当局者がイランの更新された平和提案を確認したとの報道を受け、WTI原油先物は一時3%超下落し101ドル前後まで後退した。ただしホルムズ海峡の即時再開には不透明感が残り、エネルギー供給の混乱によるインフレ懸念は依然くすぶっている。</div></div>
+<div class="ni"><div class="nt">暗号資産</div><div class="nb"><strong>ビットコイン、中東リスクオフで約1,200万円付近に軟調推移</strong> — ビットコインは2026年5月現在、イランを含む中東情勢の緊張を背景にリスクオフの流れが続き、円建てで約1,200万円付近を推移。2025年10月に更新した最高値（約1,890万円）から大幅下落した状態が続いており、停戦合意の進展が反転のカギとなるか注目される。</div></div></div>
   </div>
 </div>
  
@@ -243,15 +243,15 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
   <div class="card">
     <div class="lbl">📅 重要経済イベント</div>
-    <div class="el"><div class="ei"><div class="ed">5月7日<br><span style="font-size:14px;color:var(--text-bright)">木</span></div><div><div class="en"><span class="et">高</span>FOMC結果発表</div><div class="edesc">日本時間早朝3時頃。利下げ据え置き見込みも、イラン情勢を受けたガイダンスに注目。</div></div></div>
-<div class="ei"><div class="ed">5月8日<br><span style="font-size:14px;color:var(--text-bright)">金</span></div><div><div class="en"><span class="et">高</span>米雇用統計（4月）</div><div class="edesc">21時30分発表。労働市場の強弱がFRBの次の一手を左右。</div></div></div>
-<div class="ei"><div class="ed">5月28日<br><span style="font-size:14px;color:var(--text-bright)">木</span></div><div><div class="en"><span class="et">高</span>NVIDIA決算</div><div class="edesc">AI関連株の方向性を決める重要決算。データセンター需要の継続性を確認。</div></div></div></div>
+    <div class="el"><div class="ei"><div class="ed">5月7日<br><span style="font-size:14px;color:var(--text-bright)">木</span></div><div><div class="en"><span class="et">高</span>FOMC結果発表</div><div class="edesc">日本時間早朝3時頃。FRB高金利維持が予想されるが、イラン情勢を踏まえた今後の政策姿勢に注目。</div></div></div>
+<div class="ei"><div class="ed">5月8日<br><span style="font-size:14px;color:var(--text-bright)">金</span></div><div><div class="en"><span class="et">高</span>米雇用統計(4月)</div><div class="edesc">21時30分発表。労働市場の強弱が利下げ見通しを左右する重要指標。</div></div></div>
+<div class="ei"><div class="ed">5月20日<br><span style="font-size:14px;color:var(--text-bright)">水</span></div><div><div class="en"><span class="et">高</span>NVIDIA決算</div><div class="edesc">AI関連株の方向性を決める注目決算。データセンター収益の動向に市場の関心が集まる。</div></div></div></div>
   </div>
 </div>
 </div>
  
 <footer>
-  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: 2026年05月02日</div>
+  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: 2026年05月03日</div>
   <div class="fb">FINANCIAL DASHBOARD · Claude AI</div>
 </footer>
 </div>
@@ -281,7 +281,7 @@ function gW(start,end,vol,seed){
   res[NN-1]=end;return res;
 }
  
-var NE=59513,DE=49499,SE=7272,FE=157.10,BE=12000000;
+var NE=59513,DE=49652,SE=7204,FE=157.10,BE=12000000;
  
 var DATA={
   nikkei:{label:'日経平均',code:'N225',data:gW(38000,NE,800,1),color:G,pre:'',fmt:function(v){return Math.round(v).toLocaleString()}},
