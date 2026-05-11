@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Financial Dashboard — 2026年05月10日</title>
+<title>Financial Dashboard — 2026年05月11日</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -119,19 +119,19 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
 <header>
   <div>
     <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px"><span class="live"></span>FINANCIAL DASHBOARD</div>
-    <div class="date-main">2026年05月10日</div>
-    <div class="date-sub">日曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
+    <div class="date-main">2026年05月11日</div>
+    <div class="date-sub">月曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
   </div>
   <div><div class="clock" id="clk">--:--:--</div><div class="tz">JST · UTC+9</div></div>
 </header>
 <div class="disc"><span style="font-size:14px">⚠️</span><div><strong>重要：</strong>本ダッシュボードは情報提供のみを目的とします。掲載内容は公開アナリスト見解の整理であり、特定銘柄の推奨ではありません。投資判断はご自身でお願いします。</div></div>
  
 <div class="tr">
-  <div class="tc" onclick="si('nikkei')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">日経平均</div><div class="badge b-dn">-0.27%</div></div><div class="tc-v">53603</div><div class="tc-s dn">▼ -145 pts</div><div class="tc-m"><canvas id="m1"></canvas></div></div>
-  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge b-dn">N/A</div></div><div class="tc-v">N/A</div><div class="tc-s dn">▼ N/A pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
-  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge b-dn">N/A</div></div><div class="tc-v">N/A</div><div class="tc-s dn">▼ N/A pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
-  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge b-dn">5/6に政府・日銀が介入、円高方向に急反転</div></div><div class="tc-v">155.57</div><div class="tc-s dn">▼ -</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
-  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge b-dn">N/A</div></div><div class="tc-v tc-vs">¥12,000,000</div><div class="tc-s dn">▼ リスクオフ</div><div class="tc-s2">≈ $78000 · @¥155.57</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
+  <div class="tc" onclick="si('nikkei')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">日経平均</div><div class="badge b-dn">-0.47%</div></div><div class="tc-v">62417</div><div class="tc-s dn">▼ -295 pts</div><div class="tc-m"><canvas id="m1"></canvas></div></div>
+  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge b-up">+0.02%</div></div><div class="tc-v">49609</div><div class="tc-s up">▲ +12 pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
+  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge b-dn">-</div></div><div class="tc-v">7363</div><div class="tc-s dn">▼ - pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
+  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge b-up">介入警戒・157円台で神経質</div></div><div class="tc-v">157.10</div><div class="tc-s up">▲ +0.67</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
+  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge b-dn">-1.70%</div></div><div class="tc-v tc-vs">¥12,000,000</div><div class="tc-s dn">▼ リスクオフ</div><div class="tc-s2">≈ $80000 · @¥157.10</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
 </div>
  
 <div class="grid">
@@ -148,9 +148,9 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
       <div class="st"><div class="sl">期間騰落率</div><div class="sv" id="sCh">—</div></div>
     </div>
     <div class="cr">
-      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">184.00</div><div class="cc2 dn">▼ 介入の余波</div></div>
-      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$95.00</div><div class="cc2 up">▲ 中東緊張</div></div>
-      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$4800</div><div class="cc2 up">▲ 安全資産</div></div>
+      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">184.82</div><div class="cc2 dn">▼ 介入の余波</div></div>
+      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$98.50</div><div class="cc2 up">▲ 中東緊張</div></div>
+      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$4720</div><div class="cc2 up">▲ 安全資産</div></div>
     </div>
   </div>
  
@@ -184,11 +184,11 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
   <div class="card">
     <div class="lbl">📰 経済・国際ニュース</div>
-    <div class="nl"><div class="ni"><div class="nt">為替</div><div class="nb"><strong>日銀・財務省が5月6日にドル円介入、155円台へ急落</strong> — 5月6日（水）に当局がドル円相場に介入したとみられる。160円台後半を付けた後、急落し155.57円まで売られた。テクニカル上は「天井形成」を示唆するサインが点灯しており、本格的な円買いはこれからとの見方も。</div></div>
-<div class="ni"><div class="nt">マーケット</div><div class="nb"><strong>日経平均は5/7に史上最高値6万2833円を更新、その後反落</strong> — 連休明け5月7日の日経平均は前日比3320円高の62833円と史上最高値を更新・過去最大の上げ幅を記録。しかし8日には利益確定売りで反落し53603円で引けた。シカゴ先物は夜間で1435円高の63665円まで上昇している。</div></div>
-<div class="ni"><div class="nt">米国経済</div><div class="nb"><strong>ナスダック・S&P500が最高値更新、ハイテク株主導</strong> — 5月9日の米国市場はナスダックとS&P500が史上最高値を更新。AI・半導体株が主導し、FRBは政策金利を4.25～4.50%に据え置いた。2026年内の追加利下げ観測は後退しており、12月FOMC据え置き確率は85%（CME FedWatch）。</div></div>
-<div class="ni"><div class="nt">国際情勢</div><div class="nb"><strong>米・イラン衝突でホルムズ海峡ほぼ閉鎖、WTI原油は95ドル前後</strong> — 米国・イスラエルとイランの軍事衝突が続き、ホルムズ海峡は2月下旬来ほぼ閉鎖状態。WTI原油は週間7%超下落し95ドル前後。IEAは世界供給から1日約1400万バレルが削減されていると警告。停戦交渉の行方が焦点。</div></div>
-<div class="ni"><div class="nt">暗号資産</div><div class="nb"><strong>BTC、中東情勢リスクオフで1200万円付近に低下</strong> — 2025年10月に過去最高値12万ドル（円建て1890万円）を更新したビットコインは、イラン情勢を含む中東の緊張でリスクオフが強まり、2026年5月現在は約1200万円付近を推移。市場全体の地合いに左右されやすい状況が継続。</div></div></div>
+    <div class="nl"><div class="ni"><div class="nt">為替</div><div class="nb"><strong>ドル円157円台、介入警戒続く</strong> — ドル円は157円台前半で推移。イランが米和平提案を拒否したことで「有事のドル買い」が先行し、本日午前に一時156.97円まで上昇。一方、157円台では日本当局による円買い介入への警戒感が強く、急速なドル高は抑制されている。12日にはベッセント米財務長官が来日し高市首相・片山財務相と会談予定で、円安牽制発言への注目も高まっている。</div></div>
+<div class="ni"><div class="nt">マーケット</div><div class="nb"><strong>日経平均、半導体株高も利食いで続落295円安</strong> — 11日の東京株式市場で日経平均株価は続落、前週末比295円安の約6万2417円で引けた。前週末の米ハイテク株高を受け寄り付き後に反発し一時最高値を更新する場面もあったが、買い一巡後に半導体関連を中心に利益確定売りが優勢となり下落に転じた。ナスダックとS&P500は前週末に最高値を更新しており、引き続きAI・ハイテク株の動向が焦点。</div></div>
+<div class="ni"><div class="nt">米国経済</div><div class="nb"><strong>米4月雇用統計は強弱まちまち、FRB利下げ観測後退</strong> — 5月8日発表の米4月雇用統計は非農業部門雇用者数が11.5万人増と市場予想6.5万人増を大幅上回り労働市場の底堅さを示した。一方、平均時給は前年比+3.6%と予想+3.8%を下回り賃金インフレは鈍化。失業率は4.3%で横ばい。強弱まちまちの結果でFRBの早期利下げ期待は後退しており、12日発表の4月CPIが次の焦点となっている。</div></div>
+<div class="ni"><div class="nt">国際情勢</div><div class="nb"><strong>米イラン交渉難航、原油が一時100ドル乗せ</strong> — イランが米国の和平提案に対し「核施設廃棄を拒否」との報道が伝わり、トランプ大統領はSNSで「全く受け入れられない」と拒絶した。ホルムズ海峡は2月下旬以来事実上閉鎖状態が続き、IEAは世界供給から日量約1400万バレルが失われていると警告。WTI原油は5月11日の時間外取引で一時100ドルに乗せる場面があり、インフレ懸念が再燃している。</div></div>
+<div class="ni"><div class="nt">暗号資産</div><div class="nb"><strong>BTC約8万ドル近辺、イラン情勢でリスクオフ続く</strong> — ビットコインは5月9日に米軍のイランへの反撃報道を受けて一時7万9602ドルまで下落し24時間で約1.7%安となった。2026年5月現在は約1200万円台（約8万ドル前後）で推移。ETFへの資金流入が5日連続流入後に流出に転じるなど不安定な動きが続いている。FRB議長が5月15日にWarsh氏に交代予定で、早期利下げへの期待がBTCの反発シナリオとして注目されている。</div></div></div>
   </div>
 </div>
  
@@ -243,15 +243,15 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
   <div class="card">
     <div class="lbl">📅 重要経済イベント</div>
-    <div class="el"><div class="ei"><div class="ed">5月14日<br><span style="font-size:14px;color:var(--text-bright)">木</span></div><div><div class="en"><span class="et">高</span>トランプ訪中</div><div class="edesc">米中貿易交渉・台湾問題の行方に注目。相場の変動要因。</div></div></div>
-<div class="ei"><div class="ed">5月中旬<br><span style="font-size:14px;color:var(--text-bright)">-</span></div><div><div class="en"><span class="et et-mid">中</span>米・イラン停戦交渉の期限</div><div class="edesc">パキスタン経由でイランの回答が予想されており、原油相場・地政学リスクの分岐点。</div></div></div>
-<div class="ei"><div class="ed">5月下旬<br><span style="font-size:14px;color:var(--text-bright)">-</span></div><div><div class="en"><span class="et">高</span>エヌビディア決算</div><div class="edesc">AI関連株・日経平均への寄与大。AI相場の方向性を決める重要イベント。</div></div></div></div>
+    <div class="el"><div class="ei"><div class="ed">5月12日<br><span style="font-size:14px;color:var(--text-bright)">火</span></div><div><div class="en"><span class="et">高</span>米4月CPI発表</div><div class="edesc">21時30分発表。前月比0.6%予想。インフレ粘着性の確認が焦点。FRB利下げ時期に直結。</div></div></div>
+<div class="ei"><div class="ed">5月12日<br><span style="font-size:14px;color:var(--text-bright)">火</span></div><div><div class="en"><span class="et">高</span>ベッセント財務長官来日（~13日）</div><div class="edesc">高市首相・片山財務相と会談。円安牽制・為替政策への言及が注目される。</div></div></div>
+<div class="ei"><div class="ed">5月13日<br><span style="font-size:14px;color:var(--text-bright)">水</span></div><div><div class="en"><span class="et">高</span>トランプ大統領訪中（~15日）</div><div class="edesc">米中首脳会談。貿易・台湾問題が議題。リスクオン/オフの方向性に影響。</div></div></div></div>
   </div>
 </div>
 </div>
  
 <footer>
-  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: 2026年05月10日</div>
+  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: 2026年05月11日</div>
   <div class="fb">FINANCIAL DASHBOARD · Claude AI</div>
 </footer>
 </div>
@@ -281,7 +281,7 @@ function gW(start,end,vol,seed){
   res[NN-1]=end;return res;
 }
  
-var NE=53603,DE=N/A,SE=N/A,FE=155.57,BE=12000000;
+var NE=62417,DE=49609,SE=7363,FE=157.10,BE=12000000;
  
 var DATA={
   nikkei:{label:'日経平均',code:'N225',data:gW(38000,NE,800,1),color:G,pre:'',fmt:function(v){return Math.round(v).toLocaleString()}},
