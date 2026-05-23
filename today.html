@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Financial Dashboard — 2026年05月22日</title>
+<title>Financial Dashboard — 2026年05月23日</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -119,19 +119,19 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
 <header>
   <div>
     <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px"><span class="live"></span>FINANCIAL DASHBOARD</div>
-    <div class="date-main">2026年05月22日</div>
-    <div class="date-sub">金曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
+    <div class="date-main">2026年05月23日</div>
+    <div class="date-sub">土曜日 &nbsp;·&nbsp; FOMC週 &nbsp;·&nbsp; 決算ピーク</div>
   </div>
   <div><div class="clock" id="clk">--:--:--</div><div class="tz">JST · UTC+9</div></div>
 </header>
 <div class="disc"><span style="font-size:14px">⚠️</span><div><strong>重要：</strong>本ダッシュボードは情報提供のみを目的とします。掲載内容は公開アナリスト見解の整理であり、特定銘柄の推奨ではありません。投資判断はご自身でお願いします。</div></div>
  
 <div class="tr">
-  <div class="tc" onclick="si('nikkei')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">日経平均</div><div class="badge b-up">+2.68%</div></div><div class="tc-v">63339</div><div class="tc-s up">▲ +1654 pts</div><div class="tc-m"><canvas id="m1"></canvas></div></div>
-  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge b-up">+0.55%</div></div><div class="tc-v">50285</div><div class="tc-s up">▲ +276 pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
-  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge b-up">—</div></div><div class="tc-v">—</div><div class="tc-s up">▲ — pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
-  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge b-up">介入警戒・160円視野</div></div><div class="tc-v">159.00</div><div class="tc-s up">▲ +0.02</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
-  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge b-dn">—</div></div><div class="tc-v tc-vs">¥12,000,000</div><div class="tc-s dn">▼ リスクオフ</div><div class="tc-s2">≈ $— · @¥159.00</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
+  <div class="tc" onclick="si('nikkei')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">日経平均</div><div class="badge b-dn">-0.97%</div></div><div class="tc-v">60815</div><div class="tc-s dn">▼ -593 pts</div><div class="tc-m"><canvas id="m1"></canvas></div></div>
+  <div class="tc" onclick="si('dow')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">NYダウ</div><div class="badge b-up">+0.58%</div></div><div class="tc-v">50579</div><div class="tc-s up">▲ +294 pts</div><div class="tc-m"><canvas id="m2"></canvas></div></div>
+  <div class="tc" onclick="si('sp500')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">S&amp;P 500</div><div class="badge b-up">+0.32%</div></div><div class="tc-v">5680</div><div class="tc-s up">▲ +18 pts</div><div class="tc-m"><canvas id="m3"></canvas></div></div>
+  <div class="tc" onclick="si('forex')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm">USD / JPY</div><div class="badge b-up">160円防衛ライン・介入警戒継続</div></div><div class="tc-v">159.18</div><div class="tc-s up">▲ +0.20</div><div class="tc-m"><canvas id="m4"></canvas></div></div>
+  <div class="tc btc-tc" onclick="si('btc')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div class="tc-nm" style="color:var(--orange)">₿ ビットコイン</div><div class="badge b-up">+0.80%</div></div><div class="tc-v tc-vs">¥12,500,000</div><div class="tc-s up">▲ リスクオフ</div><div class="tc-s2">≈ $78500 · @¥159.18</div><div class="tc-m"><canvas id="m5"></canvas></div></div>
 </div>
  
 <div class="grid">
@@ -148,9 +148,9 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
       <div class="st"><div class="sl">期間騰落率</div><div class="sv" id="sCh">—</div></div>
     </div>
     <div class="cr">
-      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">184.66</div><div class="cc2 dn">▼ 介入の余波</div></div>
-      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$99.00</div><div class="cc2 up">▲ 中東緊張</div></div>
-      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$4500</div><div class="cc2 up">▲ 安全資産</div></div>
+      <div class="com"><div class="cp">EUR / JPY</div><div class="cv">184.71</div><div class="cc2 dn">▼ 介入の余波</div></div>
+      <div class="com"><div class="cp">WTI 原油</div><div class="cv">$96.60</div><div class="cc2 up">▲ 中東緊張</div></div>
+      <div class="com"><div class="cp">金 GOLD</div><div class="cv">$4523</div><div class="cc2 up">▲ 安全資産</div></div>
     </div>
   </div>
  
@@ -184,11 +184,11 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
   <div class="card">
     <div class="lbl">📰 経済・国際ニュース</div>
-    <div class="nl"><div class="ni"><div class="nt">マーケット</div><div class="nb"><strong>日経平均が最高値更新、1654円高の6万3339円</strong> — 米・イランの戦闘終結交渉進展への期待とAI・半導体株高を背景に全面高。ソフトバンクGが1銘柄で約570円分押し上げ、7営業日ぶりに最高値を更新した。</div></div>
-<div class="ni"><div class="nt">米国経済</div><div class="nb"><strong>NYダウ3カ月ぶり最高値、276ドル高の5万0285ドル</strong> — 米・イランの和平合意期待でインフレ懸念が後退し買いが優勢。ただしAI関連銘柄への依存が鮮明で、資金流入先の広がりはなお限られる。</div></div>
-<div class="ni"><div class="nt">為替</div><div class="nb"><strong>ドル円、159円台前後でもみ合い　介入警戒感も</strong> — 米経済指標の強さ（製造業PMI55.3）や米利上げ観測でドル高。一方、政府・日銀の円買い介入への警戒感から160円への一段高は抑制気味。</div></div>
-<div class="ni"><div class="nt">国際情勢</div><div class="nb"><strong>米・イラン和平交渉が進展　原油は99ドル台に下落</strong> — パキスタン仲介のもと最終草案がまとまりつつあるとの報道で原油が急落。ただしイラン最高指導者がウランの国外搬出を拒否しており不確実性は残る。</div></div>
-<div class="ni"><div class="nt">暗号資産</div><div class="nb"><strong>ビットコイン、中東リスクオフで1200万円付近を推移</strong> — イラン情勢緊張を受け市場全体がリスクオフ。ビットコインは2026年2月の940万円台から底打ち後に上昇トレンド継続も、中東情勢が重石となり上値重い展開。</div></div></div>
+    <div class="nl"><div class="ni"><div class="nt">為替</div><div class="nb"><strong>ドル円159円台で推移、160円防衛ラインへの介入警戒続く</strong> — 22日のNY外為市場でドル円は159.18円で引け。政府は160円を防衛ラインと見なし、4月30日に2024年7月以来のドル売り円買い介入（約5兆円規模）を実施。ウォーシュ新FRB議長就任後も市場は円安バイアスを維持しており、当局の動向に警戒感が続く。</div></div>
+<div class="ni"><div class="nt">マーケット</div><div class="nb"><strong>日経平均3日続落、60,815円で引け―長期金利上昇と利益確定売り重なる</strong> — 22日の東京株式市場で日経平均は前日比593円安の60,815円と3日続落。10年債利回りが一時2.8%台まで上昇し、住宅メーカーなど金利敏感株を中心に売りが波及。ただしキオクシアは好決算でストップ高買い気配。シカゴ先物は63,525円と週明けの大幅反発を示唆。</div></div>
+<div class="ni"><div class="nt">米国経済</div><div class="nb"><strong>ウォラーFRB理事「インフレ次第で利上げの可能性排除できず」と発言</strong> — 22日の講演でFRBウォラー理事はインフレが早期に鎮静化しなければ利上げの可能性は排除できないと発言。FOMC議事録もほとんどの当局者が今年の利上げを正当化し得ると認識していることを示す。原油高によるインフレ再燃懸念から、市場は10月までの25bp利上げ確率を約55%と織り込み始めている。</div></div>
+<div class="ni"><div class="nt">国際情勢</div><div class="nb"><strong>米イラン和平交渉が難航、原油96ドル台で高止まり</strong> — イランの最高指導者が濃縮ウランの国外移転を拒否する指令を発し、米国との核交渉が膠着。パキスタンが仲介役として協議を継続中だが合意の見通しは不透明。WTI原油は96.60ドルで引け。戦争前比で約50%高水準が続いており、世界経済へのインフレ圧力が続く。</div></div>
+<div class="ni"><div class="nt">暗号資産</div><div class="nb"><strong>ビットコイン1,200万円台で推移、ETFへの資金流入5週連続</strong> — 中東情勢のリスクオフを背景に2月安値940万円から回復中のビットコインは1,200万円台（約7.8万ドル）で推移。CoinSharesの5月5日付レポートでは、デジタル資産投資商品に5週連続の資金流入（週1億1,780万ドル）。BTCへは1億9,210万ドルが流入しており底堅い展開が続く。</div></div></div>
   </div>
 </div>
  
@@ -243,15 +243,15 @@ footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);displ
  
   <div class="card">
     <div class="lbl">📅 重要経済イベント</div>
-    <div class="el"><div class="ei"><div class="ed">5月22日<br><span style="font-size:14px;color:var(--text-bright)">金</span></div><div><div class="en"><span class="et">高</span>ウォーシュ次期FRB議長就任宣誓式</div><div class="edesc">日本時間24時（深夜）。新議長の金融政策スタンスに市場の注目集まる。</div></div></div>
-<div class="ei"><div class="ed">5月22日<br><span style="font-size:14px;color:var(--text-bright)">金</span></div><div><div class="en"><span class="et et-mid">中</span>米5月ミシガン大消費者態度指数</div><div class="edesc">日本時間23時発表。インフレ期待値に注目。</div></div></div>
-<div class="ei"><div class="ed">5月26日<br><span style="font-size:14px;color:var(--text-bright)">火</span></div><div><div class="en"><span class="et">高</span>米メモリアルデー明け再開</div><div class="edesc">米国3連休明け。中東和平交渉の進展如何で相場が大きく動く可能性。</div></div></div></div>
+    <div class="el"><div class="ei"><div class="ed">5月25日<br><span style="font-size:14px;color:var(--text-bright)">月</span></div><div><div class="en"><span class="et et-mid">低</span>米国メモリアルデー</div><div class="edesc">米国市場は休場。連休中に米イラン交渉の進展が懸念される。</div></div></div>
+<div class="ei"><div class="ed">5月27日<br><span style="font-size:14px;color:var(--text-bright)">水</span></div><div><div class="en"><span class="et et-mid">中</span>米コアPCE（4月）</div><div class="edesc">FRBが注視するインフレ指標。利上げ観測の強弱を左右。</div></div></div>
+<div class="ei"><div class="ed">5月29日<br><span style="font-size:14px;color:var(--text-bright)">金</span></div><div><div class="en"><span class="et">高</span>米GDP改定値（1Q）・日銀国際会議</div><div class="edesc">成長率確認と日銀の政策スタンスが焦点。円相場に影響。</div></div></div></div>
   </div>
 </div>
 </div>
  
 <footer>
-  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: 2026年05月22日</div>
+  <div class="fn">※チャートは参考用の推計値。投資判断はご自身でお願いします。データ取得: 2026年05月23日</div>
   <div class="fb">FINANCIAL DASHBOARD · Claude AI</div>
 </footer>
 </div>
@@ -281,7 +281,7 @@ function gW(start,end,vol,seed){
   res[NN-1]=end;return res;
 }
  
-var NE=63339,DE=50285,SE=—,FE=159.00,BE=12000000;
+var NE=60815,DE=50579,SE=5680,FE=159.18,BE=12500000;
  
 var DATA={
   nikkei:{label:'日経平均',code:'N225',data:gW(38000,NE,800,1),color:G,pre:'',fmt:function(v){return Math.round(v).toLocaleString()}},
